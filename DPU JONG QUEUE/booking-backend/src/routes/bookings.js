@@ -5,6 +5,8 @@ import Service from "../models/Service.js";
 import Booking from "../models/Booking.js";
 import { generateSlots, toMinutes } from "../utils/time.js";
 import { Op } from "sequelize";
+import User from "../models/User.js";
+
 
 const router = Router();
 
@@ -149,7 +151,10 @@ router.get("/admin", authRequired, adminOnly, async (req, res) => {
 
   const list = await Booking.findAll({
     where,
-    include: [{ model: Service, attributes: ["id","name"] }],
+    include: [
+      { model: Service, attributes: ["id","name"] },
+      { model: User, attributes: ["id", "full_name"] }   // ⭐ เพิ่มตรงนี้
+  ],
     order: [["date","ASC"],["time","ASC"]],
   });
   res.json(list);

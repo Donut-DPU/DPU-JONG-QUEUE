@@ -32,17 +32,17 @@
           <th>วันที่</th>
           <th>เวลา</th>
           <th>บริการ</th>
-          <th>ผู้จอง (user_id)</th>
+          <th>ผู้จอง</th>
           <th>สถานะ</th>
           <th style="width:260px;"></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="b in rows" :key="b.id">
-          <td>{{ b.date }}</td>
+          <td>{{ formatDate(b.date) }}</td>
           <td>{{ b.time }}</td>
           <td>{{ b.Service?.name || '-' }}</td>
-          <td>{{ b.user_id }}</td>
+          <td>{{ b.User?.full_name || '-' }}</td>
           <td>{{ b.status }}</td>
           <td>
             <v-btn size="small" class="mr-2" @click="setStatus(b,'confirmed')">ยืนยัน</v-btn>
@@ -89,6 +89,13 @@ async function load() {
     loading.value = false
   }
 }
+
+function formatDate(d) {
+  if (!d) return '-'
+  const [y, m, day] = d.split('-')
+  return `${day}-${m}-${y}`
+}
+
 
 async function setStatus(b, status) {
   try {
