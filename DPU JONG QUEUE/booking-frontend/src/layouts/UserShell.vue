@@ -4,7 +4,7 @@
     <v-navigation-drawer
       v-model="drawer"
       app
-      width="220"
+      width="260"
       color="white"
     >
       <!-- โลโก้ + ชื่อระบบ -->
