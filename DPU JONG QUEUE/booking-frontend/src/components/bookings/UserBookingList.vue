@@ -235,17 +235,24 @@ function statusColor (st) {
   }
 }
 
-function fmtDate (d) {
-  try {
-    return new Date(d).toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  } catch {
-    return d
-  }
+// function fmtDate (d) {
+//   try {
+//     return new Date(d).toLocaleDateString('th-TH', {
+//       year: 'numeric',
+//       month: 'short',
+//       day: 'numeric'
+//     })
+//   } catch {
+//     return d
+//   }
+// }
+
+function fmtDate(d) {
+  if (!d) return '-'
+  const [y, m, day] = d.split('-')
+  return `${day}-${m}-${y}`
 }
+
 
 // ให้ parent เรียก reload ได้
 defineExpose({ load })
