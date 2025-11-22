@@ -1,7 +1,8 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-3">
-      <h2 class="text-3xl font-bold mb-4">ประวัติการจองของฉัน</h2>
+      <h3 class="text-xl font-bold">ประวัติการจองของฉัน</h3>
+
       <div class="flex items-center">
         <v-select
           v-model="statusFilter"
@@ -25,52 +26,94 @@
       @click:close="errorMsg = ''"
     />
 
-    <!-- Card ครอบ table ทั้งก้อน -->
+    <!-- Card ครอบทั้งหมด -->
     <v-card elevation="1" class="pa-4">
-      <v-table>
-        <thead>
-          <tr>
-            <th>บริการ</th>
-            <th>วันที่</th>
-            <th>เวลา</th>
-            <th>หมายเหตุ</th>
-            <th>สถานะ</th>
-            <th style="width:150px;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="b in paged" :key="b.id">
-            <td>{{ b.service?.name || b.serviceName || serviceName(b.service_id) || '-' }}</td>
-            <td>{{ fmtDate(b.date) }}</td>
-            <td>{{ b.time }}</td>
-            <td>{{ b.note || '—' }}</td>
-            <td>
-              <v-chip :color="statusColor(b.status)" size="small">
-                {{ statusLabel(b.status) }}
-              </v-chip>
-            </td>
-            <td></td>
-          </tr>
 
-          <tr v-if="!loading && filtered.length === 0">
-            <td colspan="6" class="text-gray-600 py-6 text-center">
+      <!-- 🌐 PC / Tablet: แสดงเป็นตาราง -->
+      <div class="desktop-only">
+        <v-table>
+          <thead>
+            <tr>
+              <th>บริการ</th>
+              <th>วันที่</th>
+              <th>เวลา</th>
+              <th>หมายเหตุ</th>
+              <th>สถานะ</th>
+              <th style="width:150px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in paged" :key="b.id">
+              <td>{{ b.service?.name || b.serviceName || serviceName(b.service_id) || '-' }}</td>
+              <td>{{ fmtDate(b.date) }}</td>
+              <td>{{ b.time }}</td>
+              <td>{{ b.note || '—' }}</td>
+              <td>
+                <v-chip :color="statusColor(b.status)" size="small">
+                  {{ statusLabel(b.status) }}
+                </v-chip>
+              </td>
+              <td></td>
+            </tr>
+
+            <tr v-if="!loading && filtered.length === 0">
+              <td colspan="6" class="text-gray-600 py-6 text-center">
+                ยังไม่มีรายการจอง
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </div>
+
+      <!-- 📱 Mobile: แสดงเป็น Card ทีละรายการ -->
+      <div class="mobile-only">
+        <v-row>
+          <v-col cols="12" v-for="b in paged" :key="b.id">
+            <v-card class="mobile-booking-card" variant="outlined">
+              <v-card-title class="mobile-title">
+                {{ b.service?.name || b.serviceName || serviceName(b.service_id) || '-' }}
+              </v-card-title>
+
+              <v-card-text>
+                <div class="mobile-line">
+                  <span class="mobile-label">วันที่</span>
+                  <span>{{ fmtDate(b.date) }}</span>
+                </div>
+                <div class="mobile-line">
+                  <span class="mobile-label">เวลา</span>
+                  <span>{{ b.time }}</span>
+                </div>
+                <div class="mobile-line">
+                  <span class="mobile-label">หมายเหตุ</span>
+                  <span>{{ b.note || '—' }}</span>
+                </div>
+                <div class="mobile-line status-line">
+                  <span class="mobile-label">สถานะ</span>
+                  <v-chip :color="statusColor(b.status)" size="small">
+                    {{ statusLabel(b.status) }}
+                  </v-chip>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <v-col cols="12" v-if="!loading && filtered.length === 0">
+            <div class="text-gray-600 py-6 text-center">
               ยังไม่มีรายการจอง
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
+            </div>
+          </v-col>
+        </v-row>
+      </div>
 
-      <!-- Pagination -->
+      <!-- Pagination: ใช้ร่วมกันทั้ง PC + Mobile -->
       <div
         v-if="pageCount > 1"
-        class="mt-4 flex justify-between items-center"
+        class="pagination-row"
       >
-        <!-- ซ้าย -->
         <span class="page-text">
           หน้าที่ {{ page }} / {{ pageCount }}
         </span>
 
-        <!-- ขวา -->
         <div>
           <v-btn
             icon="mdi-chevron-left"
@@ -168,7 +211,7 @@ const paged = computed(() => {
   const start = (page.value - 1) * perPage
   return filtered.value.slice(start, start + perPage)
 })
-// -----------------------------
+// ----------------------------
 
 function statusLabel (st) {
   switch ((st || 'pending')) {
@@ -219,8 +262,56 @@ defineExpose({ load })
 .py-6{padding-top:1.5rem;padding-bottom:1.5rem;}
 .mr-2{margin-right:.5rem;}
 
+/* แสดง/ซ่อนตามขนาดหน้าจอ */
+.desktop-only { display:block; }
+.mobile-only { display:none; }
+
+@media (max-width: 768px) {
+  .desktop-only { display:none; }
+  .mobile-only { display:block; }
+}
+
+/* การ์ดบนมือถือ */
+.mobile-booking-card {
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+
+.mobile-title {
+  font-size: 16px;
+  font-weight: 700;
+  padding-bottom: 4px;
+}
+
+.mobile-line {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:13px;
+  margin-bottom:4px;
+}
+
+.mobile-label {
+  font-weight:600;
+  color:#4b5563;
+  margin-right:8px;
+}
+
+.status-line {
+  margin-top:6px;
+}
+
+/* แถว pagination */
+.pagination-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 10px 4px 0;
+  margin-top: 8px;
+}
+
 .page-text {
-  font-size: 15px;
-  color: #444;
+  font-size: 14px;
+  color:#374151;
 }
 </style>
