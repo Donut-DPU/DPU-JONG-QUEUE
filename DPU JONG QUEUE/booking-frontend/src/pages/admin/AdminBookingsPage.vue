@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-2xl font-bold">การจอง</h2>
+      <h2 class="text-2xl font-bold">รายการจอง</h2>
     </div>
 
     <BookingTable :services="services" />

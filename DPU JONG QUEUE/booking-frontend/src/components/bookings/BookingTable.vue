@@ -34,6 +34,7 @@
           <th>บริการ</th>
           <th>ผู้จอง</th>
           <th>สถานะ</th>
+          <th>จัดการนัดหมาย</th>
           <th style="width:260px;"></th>
         </tr>
       </thead>
@@ -45,10 +46,36 @@
           <td>{{ b.User?.full_name || '-' }}</td>
           <td>{{ b.status }}</td>
           <td>
-            <v-btn size="small" class="mr-2" @click="setStatus(b,'confirmed')">ยืนยัน</v-btn>
-            <v-btn size="small" class="mr-2" @click="setStatus(b,'checked_in')">เข้ารับบริการ</v-btn>
-            <v-btn size="small" class="mr-2" @click="setStatus(b,'completed')">เสร็จสิ้น</v-btn>
-            <v-btn size="small" color="error" @click="setStatus(b,'cancelled')">ยกเลิก</v-btn>
+            <v-menu>
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  size="small"
+                  variant="outlined"
+                  append-icon="mdi-chevron-down"
+                >
+                  จัดการนัดหมาย
+                </v-btn>
+              </template>
+
+              <v-list>
+                  <v-list-item @click="setStatus(b,'confirmed')">
+                    <v-list-item-title>ยืนยัน</v-list-item-title>
+                  </v-list-item>
+
+                <v-list-item @click="setStatus(b,'checked_in')">
+                  <v-list-item-title>เข้ารับบริการ</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item @click="setStatus(b,'completed')">
+                  <v-list-item-title>เสร็จสิ้น</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item @click="setStatus(b,'cancelled')">
+                  <v-list-item-title class="text-error">ยกเลิก</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
           </td>
         </tr>
       </tbody>
