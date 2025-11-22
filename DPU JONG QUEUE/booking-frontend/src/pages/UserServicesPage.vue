@@ -3,25 +3,39 @@
     <h2 class="text-3xl font-bold mb-4">เลือกบริการที่ต้องการ</h2>
 
     <v-row>
-      <v-col cols="12" md="6" v-for="s in services" :key="s.id">
-        <v-card>
-          <v-card-title class="text-h6">{{ s.name }}</v-card-title>
-          <v-card-subtitle class="mb-2">
-            เวลาให้บริการ: {{ s.dailyStartTime }} - {{ s.dailyEndTime }}
-            · ระยะต่อคิว {{ s.slotDurationMin }} นาที
-            · รับต่อ slot {{ s.slotCapacity }} คน
-          </v-card-subtitle>
-          <v-card-text class="text-gray-600">
-            {{ s.description || '—' }}
+      <v-col cols="12" md="6" lg="4" v-for="s in services" :key="s.id">
+        <v-card class="service-card" elevation="2">
+
+          <v-card-text>
+            <h3 class="service-title">{{ s.name }}</h3>
+
+            <p class="service-line">
+              เวลาให้บริการ:
+              <span class="strong">{{ s.dailyStartTime }} - {{ s.dailyEndTime }}</span>
+            </p>
+
+            <p class="service-line">
+              ระยะต่อคิว:
+              <span class="strong">{{ s.slotDurationMin }} นาที</span> · รับต่อ slot
+              <span class="strong">{{ s.slotCapacity }} คน</span>
+            </p>
+
+            <p class="service-desc">
+              {{ s.description || "—" }}
+            </p>
           </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" @click="openBooking(s)">เลือกบริการ</v-btn>
+
+          <v-card-actions class="service-footer">
+            <v-btn block class="service-btn" @click="openBooking(s)">
+              เลือกบริการ
+            </v-btn>
           </v-card-actions>
+
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Dialog จอง -->
+    <!-- Dialog เดิม -->
     <BookingDialog
       v-if="dialog"
       :service="selectedService"
@@ -66,9 +80,53 @@ function onBooked(b) {
 </script>
 
 <style scoped>
-.mb-2 { margin-bottom: .5rem; }
-.mb-4 { margin-bottom: 1rem; }
-.text-3xl { font-size: 1.875rem; font-weight: 700; }
-.font-bold { font-weight: 700; }
-.text-gray-600 { color: #6b7280; }
+.service-card {
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.service-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #111827;
+}
+
+.service-line {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 4px;
+}
+
+.service-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+.strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.service-footer {
+  margin-top: auto;
+  padding: 0 16px 16px;
+}
+
+.service-btn {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
+  color: #fff;
+  font-weight: 600;
+  text-transform: none;
+  height: 44px;
+}
+
+.service-btn:hover {
+  filter: brightness(1.06);
+}
 </style>
