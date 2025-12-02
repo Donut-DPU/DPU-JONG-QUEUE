@@ -24,9 +24,9 @@
         />
 
         <div class="flex items-center gap mb-3">
-          <v-btn @click="loadSlots" :loading="loading">โหลดเวลาให้บริการ</v-btn>
+          <v-btn @click="loadSlots" :loading="loading">ตรวจสอบคิวว่าง</v-btn>
           <span v-if="!slots.length && !loading" class="text-gray-600">
-            เลือกวันที่แล้วกด “โหลดเวลาให้บริการ”
+            เลือกวันที่แล้วกด “เวลาให้บริการ”
           </span>
         </div>
 
