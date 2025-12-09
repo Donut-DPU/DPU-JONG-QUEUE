@@ -72,6 +72,8 @@ const route = useRoute()
 const items = [
   { title: 'บริการ', to: '/admin/services', icon: 'mdi-wrench' },
   { title: 'การจอง', to: '/admin/bookings', icon: 'mdi-calendar-check' },
+  { title: 'ตารางคิว', icon: 'mdi-calendar-range', to: '/admin/schedule' },
+
 ]
 
 function go(path) {

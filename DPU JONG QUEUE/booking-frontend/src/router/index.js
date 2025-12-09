@@ -14,6 +14,8 @@ import UserBookingsPage from '@/pages/UserBookingsPage.vue'
 import AdminShell from '@/layouts/AdminShell.vue'
 import AdminServicesPage from '@/pages/admin/AdminServicesPage.vue'
 import AdminBookingsPage from '@/pages/admin/AdminBookingsPage.vue'
+import AdminSchedulePage from '@/pages/admin/AdminSchedulePage.vue'
+
 
 const routes = [
   // 🔓 public
@@ -48,7 +50,8 @@ const routes = [
     children: [
       { path: '', redirect: '/admin/services' },
       { path: 'services', component: AdminServicesPage },
-      { path: 'bookings', component: AdminBookingsPage }
+      { path: 'bookings', component: AdminBookingsPage },
+      { path: 'schedule', component: AdminSchedulePage }
     ]
   },
 
