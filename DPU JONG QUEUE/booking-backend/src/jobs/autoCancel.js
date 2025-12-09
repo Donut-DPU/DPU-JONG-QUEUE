@@ -24,7 +24,7 @@ export default function startAutoCancelJob() {
       for (const b of list) {
         // ถ้านัดหมายเป็นวันก่อนหน้า → ถือว่า no_show ทันที
         if (b.date < today) {
-          b.status = "no_show";
+          b.status = "ถูกยกเลิกเนื่องจากเลยเวลาที่กำหนด";
           await b.save();
           continue;
         }
@@ -33,7 +33,7 @@ export default function startAutoCancelJob() {
         const slotEndMin = h*60 + m + 10; // 10 นาที grace
         const curMin = Number(hh)*60 + Number(mm);
         if (curMin > slotEndMin) {
-          b.status = "no_show";
+          b.status = "ฉ";
           await b.save();
         }
       }
