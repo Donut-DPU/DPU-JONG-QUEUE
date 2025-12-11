@@ -9,6 +9,8 @@ import RegisterPage from '@/pages/RegisterPage.vue'
 import UserShell from '@/layouts/UserShell.vue'
 import UserServicesPage from '@/pages/UserServicesPage.vue'
 import UserBookingsPage from '@/pages/UserBookingsPage.vue'
+import UserAppointmentsPage from '@/pages/UserAppointmentsPage.vue'
+
 
 // Admin pages + layout
 import AdminShell from '@/layouts/AdminShell.vue'
@@ -31,7 +33,9 @@ const routes = [
     component: UserShell,
     children: [
       { path: 'services', component: UserServicesPage },
-      { path: 'my-bookings', component: UserBookingsPage }
+      { path: 'my-bookings', component: UserBookingsPage },
+      { path: '/my-appointments', component: UserAppointmentsPage }
+      
     ]
   },
 

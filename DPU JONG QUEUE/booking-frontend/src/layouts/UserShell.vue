@@ -28,6 +28,12 @@
         />
         <v-list-item
           prepend-icon="mdi-history"
+          title="นัดหมายของคุณ"
+          :active="isOn('/my-appointments')"
+          @click="go('/my-appointments')"
+        /> 
+        <v-list-item
+          prepend-icon="mdi-history"
           title="ประวัติการจอง"
           :active="isOn('/my-bookings')"
           @click="go('/my-bookings')"
