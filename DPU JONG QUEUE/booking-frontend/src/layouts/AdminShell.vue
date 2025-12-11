@@ -69,10 +69,25 @@ const drawer = ref(true)   // 👈 เปิดค้างเป็นค่า
 const router = useRouter()
 const route = useRoute()
 
+
+const menus = [
+  { icon: 'mdi-hammer-wrench', label: 'บริการ', to: '/admin/services' },
+  { icon: 'mdi-calendar-check', label: 'การจอง', to: '/admin/bookings' },
+
+  // ✅ ตารางเดิมแบบรายการ
+  { icon: 'mdi-table', label: 'ตารางคิว (รายการ)', to: '/admin/schedule' },
+
+  // ✅ ตารางคิวแบบรายสัปดาห์
+  { icon: 'mdi-calendar-week', label: 'ตารางคิวรายสัปดาห์', to: '/admin/schedule-week' },
+]
+
+
+
 const items = [
   { title: 'บริการ', to: '/admin/services', icon: 'mdi-wrench' },
   { title: 'การจอง', to: '/admin/bookings', icon: 'mdi-calendar-check' },
-  { title: 'ตารางคิว', icon: 'mdi-calendar-range', to: '/admin/schedule' },
+  { title: 'ตารางคิวนัดหมาย', icon: 'mdi-table', label: 'ตารางคิว (รายการ)', to: '/admin/schedule' },
+  { title: 'ตรวจสอบคิวว่าง',icon: 'mdi-calendar-week', label: 'ตารางคิวรายสัปดาห์', to: '/admin/schedule-week' },
 
 ]
 

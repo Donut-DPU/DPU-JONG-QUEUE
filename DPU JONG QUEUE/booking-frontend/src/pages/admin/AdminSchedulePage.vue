@@ -2,7 +2,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-2xl font-bold">ตารางคิว (ปฏิทินนัดหมาย)</h2>
+      <h2 class="text-2xl font-bold">ตารางคิวนัดหมาย</h2>
     </div>
 
     <!-- ฟิลเตอร์ด้านบน -->

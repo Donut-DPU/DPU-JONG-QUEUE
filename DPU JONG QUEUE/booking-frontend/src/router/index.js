@@ -17,6 +17,8 @@ import AdminShell from '@/layouts/AdminShell.vue'
 import AdminServicesPage from '@/pages/admin/AdminServicesPage.vue'
 import AdminBookingsPage from '@/pages/admin/AdminBookingsPage.vue'
 import AdminSchedulePage from '@/pages/admin/AdminSchedulePage.vue'
+import AdminWeekViewPage from '@/pages/admin/AdminWeekViewPage.vue'
+
 
 
 const routes = [
@@ -55,7 +57,8 @@ const routes = [
       { path: '', redirect: '/admin/services' },
       { path: 'services', component: AdminServicesPage },
       { path: 'bookings', component: AdminBookingsPage },
-      { path: 'schedule', component: AdminSchedulePage }
+      { path: 'schedule', component: AdminSchedulePage },
+      { path: 'schedule-week', component: AdminWeekViewPage }
     ]
   },
 
