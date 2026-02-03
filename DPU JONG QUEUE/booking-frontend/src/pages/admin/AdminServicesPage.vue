@@ -2,7 +2,16 @@
   <div>
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-2xl font-bold">บริการ</h2>
-      <v-btn color="primary" @click="openCreate">+ เพิ่มบริการ</v-btn>
+
+      <div class="actions">
+        <!-- ✅ ปุ่มใหม่: เพิ่มห้องสมุด -->
+        <v-btn variant="outlined" class="mr-2" @click="openCreateRoom">
+          + เพิ่มห้องสมุด
+        </v-btn>
+
+        <!-- ✅ ของเดิม: เพิ่มบริการ -->
+        <v-btn color="primary" @click="openCreate">+ เพิ่มบริการ</v-btn>
+      </div>
     </div>
 
     <!-- 🔹 กรอบ card ครอบตาราง + pagination -->
@@ -22,7 +31,19 @@
           <tbody>
             <!-- ใช้ pagedServices แทน services เพื่อจำกัดทีละ 10 แถว -->
             <tr v-for="s in pagedServices" :key="s.id">
-              <td>{{ s.name }}</td>
+              <td>
+                {{ s.name }}
+                <!-- (ไม่บังคับ) แสดง tag ถ้าเป็นห้องสมุด -->
+                <v-chip
+                  v-if="s.category === 'library_room'"
+                  size="x-small"
+                  class="ml-2"
+                  color="primary"
+                  variant="tonal"
+                >
+                  ห้องสมุด
+                </v-chip>
+              </td>
               <td>{{ s.dailyStartTime }} - {{ s.dailyEndTime }}</td>
               <td>{{ s.slotCapacity }}</td>
               <td>{{ s.slotDurationMin }}</td>
@@ -110,18 +131,38 @@ watch(services, () => {
 async function loadServices() {
   services.value = await api('/api/services?all=1')
 }
+
+/** ✅ ของเดิม */
 function openCreate(){ editing.value = null; dialog.value = true }
 function openEdit(s){ editing.value = { ...s }; dialog.value = true }
+
+/** ✅ ใหม่: เพิ่มห้องสมุด (ห้อง = service ที่มี category='library_room') */
+function openCreateRoom(){
+  editing.value = {
+    name: '',
+    description: '',
+    dailyStartTime: '09:00',
+    dailyEndTime: '18:00',
+    slotDurationMin: 60,
+    slotCapacity: 1,
+    active: true,
+    category: 'library_room'   // ⭐ สำคัญ
+  }
+  dialog.value = true
+}
+
 async function remove(s){
   if (!confirm(`ลบบริการ "${s.name}" ?`)) return
   await api(`/api/services/${s.id}`, { method: 'DELETE' })
   await loadServices()
 }
+
 async function onSaved(){
   dialog.value = false
   editing.value = null
   await loadServices()
 }
+
 onMounted(loadServices)
 </script>
 
@@ -133,6 +174,9 @@ onMounted(loadServices)
 .text-2xl { font-size:1.5rem; }
 .font-bold { font-weight:700; }
 .mr-2 { margin-right:.5rem; }
+.ml-2 { margin-left:.5rem; }
+
+.actions { display:flex; align-items:center; }
 
 /* 🔹 card + table style */
 .services-card {

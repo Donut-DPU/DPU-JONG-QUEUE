@@ -6,7 +6,8 @@ import Booking from "../models/Booking.js";
 import { generateSlots, toMinutes } from "../utils/time.js";
 import { Op } from "sequelize";
 import User from "../models/User.js";
-
+import ServiceWeeklyOff from "../models/ServiceWeeklyOff.js";
+import ServiceHoliday from "../models/ServiceHoliday.js";
 
 const router = Router();
 
@@ -21,12 +22,21 @@ function nowBangkok() {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const parts = Object.fromEntries(f.formatToParts(new Date()).map(p => [p.type, p.value]));
+  const parts = Object.fromEntries(
+    f.formatToParts(new Date()).map((p) => [p.type, p.value])
+  );
   const date = `${parts.year}-${parts.month}-${parts.day}`; // YYYY-MM-DD
-  const time = `${parts.hour}:${parts.minute}`;              // HH:mm
+  const time = `${parts.hour}:${parts.minute}`; // HH:mm
   return { date, time };
 }
-const ACTIVE_STATUSES = ["pending","confirmed","checked_in"];
+const ACTIVE_STATUSES = ["pending", "confirmed", "checked_in"];
+
+// dateStr รูปแบบ 'YYYY-MM-DD'
+function weekdayFromDate(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d)); // ใช้ UTC กัน timezone งง
+  return dt.getUTCDay(); // 0=อาทิตย์ ... 6=เสาร์
+}
 
 /**
  * GET /api/bookings/slots?serviceId=1&date=YYYY-MM-DD
@@ -35,32 +45,96 @@ const ACTIVE_STATUSES = ["pending","confirmed","checked_in"];
 router.get("/slots", authRequired, async (req, res) => {
   try {
     const { serviceId, date } = req.query;
-    if (!serviceId || !date) return res.status(400).json({ message: "serviceId & date required" });
+    if (!serviceId || !date)
+      return res
+        .status(400)
+        .json({ message: "serviceId & date required" });
 
     const service = await Service.findByPk(serviceId);
-    if (!service || !service.active) return res.status(404).json({ message: "Service not available" });
+    if (!service || !service.active)
+      return res
+        .status(404)
+        .json({ message: "Service not available" });
 
-    const slots = generateSlots(service.dailyStartTime, service.dailyEndTime, service.slotDurationMin);
+    // ⭐⭐ เพิ่มเช็ควันหยุดตรงนี้ (ไม่ยุ่ง logic เดิมด้านล่าง) ⭐⭐
+
+    // 1) วันหยุดประจำสัปดาห์ (เช่น ปิดทุกวันอาทิตย์)
+    const weekday = weekdayFromDate(date); // 0–6
+    const weeklyOff = await ServiceWeeklyOff.findOne({
+      where: { service_id: serviceId, weekday },
+    });
+    if (weeklyOff) {
+      return res.json({
+        serviceId: service.id,
+        date,
+        closed: true,
+        reason: "ปิดให้บริการประจำสัปดาห์",
+        slots: [],
+      });
+    }
+
+    // 2) วันหยุดพิเศษ (วันหยุดเพิ่มเป็นรายวัน)
+    const holiday = await ServiceHoliday.findOne({
+      where: { service_id: serviceId, date },
+    });
+    if (holiday) {
+      return res.json({
+        serviceId: service.id,
+        date,
+        closed: true,
+        reason: holiday.reason || "หยุดให้บริการ",
+        slots: [],
+      });
+    }
+
+    // ⭐⭐ จากบรรทัดนี้ลงไปคือ logic เดิมของคุณ ⭐⭐
+
+    const slots = generateSlots(
+      service.dailyStartTime,
+      service.dailyEndTime,
+      service.slotDurationMin
+    );
 
     // นับที่ถูกจองแล้ว
     const counts = await Booking.findAll({
-      attributes: ["time", [Booking.sequelize.fn("COUNT", Booking.sequelize.col("id")), "count"]],
-      where: { service_id: serviceId, date, status: { [Op.in]: ACTIVE_STATUSES } },
+      attributes: [
+        "time",
+        [
+          Booking.sequelize.fn(
+            "COUNT",
+            Booking.sequelize.col("id")
+          ),
+          "count",
+        ],
+      ],
+      where: {
+        service_id: serviceId,
+        date,
+        status: { [Op.in]: ACTIVE_STATUSES },
+      },
       group: ["time"],
       raw: true,
     });
-    const mapCount = new Map(counts.map(c => [c.time, Number(c.count)]));
+    const mapCount = new Map(
+      counts.map((c) => [c.time, Number(c.count)])
+    );
 
     // ถ้าวันนี้ → ปิด slot ที่ผ่านมาแล้ว
     const { date: today, time: nowHHMM } = nowBangkok();
     const nowMin = toMinutes(nowHHMM);
     const isToday = date === today;
 
-    const result = slots.map(t => {
+    const result = slots.map((t) => {
       const booked = mapCount.get(t) || 0;
       let remaining = Math.max(0, service.slotCapacity - booked);
-      if (isToday && toMinutes(t) <= nowMin) remaining = 0; // ปิด slot ที่ผ่านมาแล้ว
-      return { time: t, capacity: service.slotCapacity, booked, remaining };
+      if (isToday && toMinutes(t) <= nowMin)
+        remaining = 0; // ปิด slot ที่ผ่านมาแล้ว
+      return {
+        time: t,
+        capacity: service.slotCapacity,
+        booked,
+        remaining,
+      };
     });
 
     res.json({ serviceId: service.id, date, slots: result });
@@ -78,37 +152,74 @@ router.post("/", authRequired, async (req, res) => {
   try {
     const userId = req.user.id;
     const { serviceId, date, time, note } = req.body;
-    if (!serviceId || !date || !time) return res.status(400).json({ message: "serviceId, date, time required" });
+    if (!serviceId || !date || !time)
+      return res
+        .status(400)
+        .json({ message: "serviceId, date, time required" });
 
     const service = await Service.findByPk(serviceId);
-    if (!service || !service.active) return res.status(404).json({ message: "Service not available" });
+    if (!service || !service.active)
+      return res
+        .status(404)
+        .json({ message: "Service not available" });
 
     const { date: today, time: nowHHMM } = nowBangkok();
-    if (date < today) return res.status(400).json({ message: "Cannot book in the past date" });
+    if (date < today)
+      return res
+        .status(400)
+        .json({ message: "Cannot book in the past date" });
     if (date === today && toMinutes(time) <= toMinutes(nowHHMM)) {
-      return res.status(400).json({ message: "Cannot book a past time today" });
+      return res
+        .status(400)
+        .json({ message: "Cannot book a past time today" });
     }
 
     // เวลาในคำขอต้องตรงกับ slot จริง
-    const slots = generateSlots(service.dailyStartTime, service.dailyEndTime, service.slotDurationMin);
-    if (!slots.includes(time)) return res.status(400).json({ message: "Invalid time slot" });
+    const slots = generateSlots(
+      service.dailyStartTime,
+      service.dailyEndTime,
+      service.slotDurationMin
+    );
+    if (!slots.includes(time))
+      return res
+        .status(400)
+        .json({ message: "Invalid time slot" });
 
     // กัน user จองซ้ำ slot เดิม (ยังไม่นับคิวเสร็จ/ยกเลิก)
     const existsMine = await Booking.findOne({
-      where: { user_id: userId, service_id: serviceId, date, time, status: { [Op.in]: ACTIVE_STATUSES } },
+      where: {
+        user_id: userId,
+        service_id: serviceId,
+        date,
+        time,
+        status: { [Op.in]: ACTIVE_STATUSES },
+      },
     });
-    if (existsMine) return res.status(409).json({ message: "You already booked this slot" });
+    if (existsMine)
+      return res
+        .status(409)
+        .json({ message: "You already booked this slot" });
 
     // เช็ค capacity
     const bookedCount = await Booking.count({
-      where: { service_id: serviceId, date, time, status: { [Op.in]: ACTIVE_STATUSES } },
+      where: {
+        service_id: serviceId,
+        date,
+        time,
+        status: { [Op.in]: ACTIVE_STATUSES },
+      },
     });
-    if (bookedCount >= service.slotCapacity) return res.status(409).json({ message: "Slot is full" });
+    if (bookedCount >= service.slotCapacity)
+      return res
+        .status(409)
+        .json({ message: "Slot is full" });
 
     const b = await Booking.create({
       user_id: userId,
       service_id: serviceId,
-      date, time, note,
+      date,
+      time,
+      note,
       status: "pending",
     });
 
@@ -124,15 +235,29 @@ router.post("/", authRequired, async (req, res) => {
 router.get("/mine", authRequired, async (req, res) => {
   const list = await Booking.findAll({
     where: { user_id: req.user.id },
-    order: [["date","ASC"],["time","ASC"]],
+    order: [
+      ["date", "ASC"],
+      ["time", "ASC"],
+    ],
   });
   res.json(list);
 });
 
 router.patch("/:id/status", authRequired, adminOnly, async (req, res) => {
   const { status } = req.body;
-  if (!["pending","confirmed","checked_in","completed","cancelled","no_show"].includes(status))
-    return res.status(400).json({ message: "Invalid status" });
+  if (
+    ![
+      "pending",
+      "confirmed",
+      "checked_in",
+      "completed",
+      "cancelled",
+      "no_show",
+    ].includes(status)
+  )
+    return res
+      .status(400)
+      .json({ message: "Invalid status" });
 
   const b = await Booking.findByPk(req.params.id);
   if (!b) return res.status(404).json({ message: "Not found" });
@@ -152,10 +277,13 @@ router.get("/admin", authRequired, adminOnly, async (req, res) => {
   const list = await Booking.findAll({
     where,
     include: [
-      { model: Service, attributes: ["id","name"] },
-      { model: User, attributes: ["id", "full_name"] }   // ⭐ เพิ่มตรงนี้
-  ],
-    order: [["date","ASC"],["time","ASC"]],
+      { model: Service, attributes: ["id", "name"] },
+      { model: User, attributes: ["id", "full_name"] }, // ⭐ เพิ่มไว้ถูกแล้ว
+    ],
+    order: [
+      ["date", "ASC"],
+      ["time", "ASC"],
+    ],
   });
   res.json(list);
 });
