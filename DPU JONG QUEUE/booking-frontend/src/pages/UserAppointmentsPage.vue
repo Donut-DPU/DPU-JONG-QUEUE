@@ -37,7 +37,7 @@
           </v-card-title>
 
           <v-card-subtitle class="mb-3 text-gray-600">
-            Booking #{{ b.id }}
+            {{ b.bookingCode || `#${b.id}` }}
           </v-card-subtitle>
 
           <v-card-text class="card-body">
@@ -199,6 +199,21 @@ function fmtDate (d) {
     return d
   }
 }
+
+
+function formatBookingCode(code) {
+  if (!code) return '-'
+
+  // BK-2026-02-1 → แยกส่วน
+  const parts = code.split('-')
+  if (parts.length !== 4) return code
+
+  const [bk, year, month, run] = parts
+  return `${bk}-${year}-${month}-${String(run).padStart(4, '0')}`
+}
+
+
+
 </script>
 
 <style scoped>

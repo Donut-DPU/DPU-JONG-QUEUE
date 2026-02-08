@@ -124,6 +124,7 @@ router.post("/", authRequired, async (req, res) => {
 router.get("/mine", authRequired, async (req, res) => {
   const list = await Booking.findAll({
     where: { user_id: req.user.id },
+    
     include: [
       { model: Service, attributes: ["id", "name"] },
     ],
