@@ -124,7 +124,8 @@ router.post("/", authRequired, async (req, res) => {
 router.get("/mine", authRequired, async (req, res) => {
   const list = await Booking.findAll({
     where: { user_id: req.user.id },
-    order: [["date","ASC"],["time","ASC"]],
+    order: [["date","DESC"], ["time","DESC"]],
+    // order: [["date","ASC"],["time","ASC"]],
   });
   res.json(list);
 });
