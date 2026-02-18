@@ -60,17 +60,34 @@ Service.hasMany(Booking, { foreignKey: "service_id" });
 Booking.belongsTo(Service, { foreignKey: "service_id" });
 
 /* ---------------- bookingCode generator ---------------- */
-Booking.beforeCreate(async (booking) => {
-  // booking.date = YYYY-MM-DD
-  const [year, month] = booking.date.split("-");
+Booking.beforeValidate(async (booking) => {
+  console.log("HOOK RUNNING");
+
+  if (booking.bookingCode) return;
+
+  if (!booking.date) {
+    throw new Error("Booking date is missing");
+  }
+
+  const dateStr = booking.date; // ใช้ตรง ๆ ได้เลย
+
+  /*const dateStr =
+    typeof booking.date === "string"
+      ? booking.date
+      : booking.date.toISOString().split("T")[0];*/
+
+  const [year, month] = dateStr.split("-");
+
+  const startDate = `${year}-${month}-01`;
+
+  const endDate = new Date(year, month, 0)
+    .toISOString()
+    .split("T")[0];
 
   const count = await Booking.count({
     where: {
       date: {
-        [Op.between]: [
-          `${year}-${month}-01`,
-          `${year}-${month}-31`,
-        ],
+        [Op.between]: [startDate, endDate],
       },
     },
   });
