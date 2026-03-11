@@ -9,11 +9,17 @@ import RegisterPage from '@/pages/RegisterPage.vue'
 import UserShell from '@/layouts/UserShell.vue'
 import UserServicesPage from '@/pages/UserServicesPage.vue'
 import UserBookingsPage from '@/pages/UserBookingsPage.vue'
+import UserAppointmentsPage from '@/pages/UserAppointmentsPage.vue'
+
 
 // Admin pages + layout
 import AdminShell from '@/layouts/AdminShell.vue'
 import AdminServicesPage from '@/pages/admin/AdminServicesPage.vue'
 import AdminBookingsPage from '@/pages/admin/AdminBookingsPage.vue'
+import AdminSchedulePage from '@/pages/admin/AdminSchedulePage.vue'
+import AdminWeekViewPage from '@/pages/admin/AdminWeekViewPage.vue'
+
+
 
 const routes = [
   // 🔓 public
@@ -29,7 +35,9 @@ const routes = [
     component: UserShell,
     children: [
       { path: 'services', component: UserServicesPage },
-      { path: 'my-bookings', component: UserBookingsPage }
+      { path: 'my-bookings', component: UserBookingsPage },
+      { path: '/my-appointments', component: UserAppointmentsPage }
+      
     ]
   },
 
@@ -48,7 +56,9 @@ const routes = [
     children: [
       { path: '', redirect: '/admin/services' },
       { path: 'services', component: AdminServicesPage },
-      { path: 'bookings', component: AdminBookingsPage }
+      { path: 'bookings', component: AdminBookingsPage },
+      { path: 'schedule', component: AdminSchedulePage },
+      { path: 'schedule-week', component: AdminWeekViewPage }
     ]
   },
 

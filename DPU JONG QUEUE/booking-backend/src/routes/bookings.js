@@ -114,8 +114,10 @@ router.post("/", authRequired, async (req, res) => {
 
     res.status(201).json(b);
   } catch (e) {
+    console.error(e);
     res.status(500).json({ message: e.message });
   }
+
 });
 
 /**
@@ -124,10 +126,15 @@ router.post("/", authRequired, async (req, res) => {
 router.get("/mine", authRequired, async (req, res) => {
   const list = await Booking.findAll({
     where: { user_id: req.user.id },
-    order: [["date","ASC"],["time","ASC"]],
+    
+    include: [
+      { model: Service, attributes: ["id", "name"] },
+    ],
+    order: [["date","DESC"], ["time","DESC"]],
   });
   res.json(list);
 });
+
 
 router.patch("/:id/status", authRequired, adminOnly, async (req, res) => {
   const { status } = req.body;
@@ -155,7 +162,7 @@ router.get("/admin", authRequired, adminOnly, async (req, res) => {
       { model: Service, attributes: ["id","name"] },
       { model: User, attributes: ["id", "full_name"] }   // ⭐ เพิ่มตรงนี้
   ],
-    order: [["date","ASC"],["time","ASC"]],
+    order: [["date","DESC"], ["time","DESC"]],
   });
   res.json(list);
 });
