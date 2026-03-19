@@ -7,6 +7,7 @@ import sequelize from "./config/database.js";
 import "./models/User.js";
 import "./models/Service.js";
 import "./models/Booking.js";
+import "./models/Category.js";
 
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
@@ -14,6 +15,9 @@ import serviceRoutes from "./routes/services.js";
 import bookingRoutes from "./routes/bookings.js";
 
 import startAutoCancelJob from "./jobs/autoCancel.js";
+
+import categoryRoutes from "./routes/categories.js";
+app.use("/api/categories", categoryRoutes);
 
 dotenv.config();
 const app = express();

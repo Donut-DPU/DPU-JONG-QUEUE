@@ -42,4 +42,15 @@ router.get("/", async (req, res) => {
   res.json(list);
 });
 
+//หมวดหมู่
+router.get("/", async (req, res) => {
+  const { categoryId } = req.query;
+
+  const where = { active: true };
+  if (categoryId) where.category_id = categoryId;
+
+  const list = await Service.findAll({ where });
+  res.json(list);
+});
+
 export default router;
