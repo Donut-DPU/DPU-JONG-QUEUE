@@ -1,56 +1,151 @@
 import { Router } from "express";
 import { authRequired, adminOnly } from "../middleware/auth.js";
 import Service from "../models/Service.js";
+import Category from "../models/Category.js";
 
 const router = Router();
 
-// ADMIN: create service
-router.post("/", authRequired, adminOnly, async (req, res) => {
+/**
+ * =========================
+ * GET /api/services
+ * =========================
+ * ดึงบริการทั้งหมด + หมวดหมู่
+ */
+router.get("/", async (req, res) => {
   try {
-    const s = await Service.create(req.body);
-    res.status(201).json(s);
+    const list = await Service.findAll({
+      include: [
+        {
+          model: Category,
+          attributes: ["id", "name"],
+        },
+      ],
+      order: [["id", "ASC"]],
+    });
+
+    res.json(list);
   } catch (e) {
-    res.status(400).json({ message: e.message });
+    res.status(500).json({ message: e.message });
   }
 });
 
-// ADMIN: update service
+/**
+ * =========================
+ * GET /api/services/:id
+ * =========================
+ */
+router.get("/:id", async (req, res) => {
+  try {
+    const s = await Service.findByPk(req.params.id, {
+      include: [
+        {
+          model: Category,
+          attributes: ["id", "name"],
+        },
+      ],
+    });
+
+    if (!s) return res.status(404).json({ message: "Not found" });
+
+    res.json(s);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+/**
+ * =========================
+ * POST /api/services
+ * =========================
+ * สร้างบริการ (Admin)
+ */
+router.post("/", authRequired, adminOnly, async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      categoryId,
+      dailyStartTime,
+      dailyEndTime,
+      slotDurationMin,
+      slotCapacity,
+    } = req.body;
+
+    const s = await Service.create({
+      name,
+      description,
+      category_id: categoryId,
+      dailyStartTime,
+      dailyEndTime,
+      slotDurationMin,
+      slotCapacity,
+    });
+
+    res.json(s);
+  } catch (e) {
+    console.error("CREATE SERVICE ERROR:", e);
+    res.status(500).json({ message: e.message });
+  }
+});
+
+/**
+ * =========================
+ * PUT /api/services/:id
+ * =========================
+ * แก้ไขบริการ (Admin)
+ */
 router.put("/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const s = await Service.findByPk(req.params.id);
     if (!s) return res.status(404).json({ message: "Not found" });
-    await s.update(req.body);
+
+    const {
+      name,
+      description,
+      categoryId,
+      dailyStartTime,
+      dailyEndTime,
+      slotDurationMin,
+      slotCapacity,
+      active,
+    } = req.body;
+
+    await s.update({
+      name,
+      description,
+      category_id: categoryId,
+      dailyStartTime,
+      dailyEndTime,
+      slotDurationMin,
+      slotCapacity,
+      active,
+    });
+
     res.json(s);
   } catch (e) {
-    res.status(400).json({ message: e.message });
+    console.error("UPDATE SERVICE ERROR:", e);
+    res.status(500).json({ message: e.message });
   }
 });
 
-// ADMIN: delete service
+/**
+ * =========================
+ * DELETE /api/services/:id
+ * =========================
+ * ลบบริการ (Admin)
+ */
 router.delete("/:id", authRequired, adminOnly, async (req, res) => {
-  const s = await Service.findByPk(req.params.id);
-  if (!s) return res.status(404).json({ message: "Not found" });
-  await s.destroy();
-  res.json({ message: "Deleted" });
-});
+  try {
+    const s = await Service.findByPk(req.params.id);
+    if (!s) return res.status(404).json({ message: "Not found" });
 
-// USER/ADMIN: list active (หรือทั้งหมดถ้ามีพารามิเตอร์)
-router.get("/", async (req, res) => {
-  const { all } = req.query;
-  const where = all ? {} : { active: true };
-  const list = await Service.findAll({ where, order:[["id","ASC"]] });
-  res.json(list);
-});
+    await s.destroy();
 
-//หมวดหมู่
-router.get("/", async (req, res) => {
-  const { categoryId } = req.query;
-
-  const where = { active: true };
-  if (categoryId) where.category_id = categoryId;
-
-  const list = await Service.findAll({ where });
-  res.json(list);
+    res.json({ message: "Deleted" });
+  } catch (e) {
+    console.error("DELETE SERVICE ERROR:", e);
+    res.status(500).json({ message: e.message });
+  }
 });
 
 export default router;

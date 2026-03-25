@@ -1,83 +1,148 @@
 <template>
-  <v-dialog v-model="visible" max-width="520">
+  <v-dialog v-model="visible" max-width="500">
     <v-card>
-      <v-card-title class="text-h6">
+      <v-card-title>
         {{ form.id ? 'แก้ไขบริการ' : 'เพิ่มบริการ' }}
       </v-card-title>
+
       <v-card-text>
-        <v-form v-model="valid" @submit.prevent="save">
-          <v-text-field v-model="form.name" label="ชื่อบริการ" :rules="[r]" class="mb-3" />
-          <v-textarea v-model="form.description" label="รายละเอียด" class="mb-3" />
 
-          <div class="flex gap">
-            <v-text-field v-model="form.dailyStartTime" label="เวลาเริ่ม (HH:mm)" class="mb-3" />
-            <v-text-field v-model="form.dailyEndTime" label="เวลาสิ้นสุด (HH:mm)" class="mb-3" />
-          </div>
+        <!-- ✅ ชื่อ -->
+        <v-text-field
+          v-model="form.name"
+          label="ชื่อบริการ"
+        />
 
-          <div class="flex gap">
-            <v-text-field v-model.number="form.slotDurationMin" label="ระยะ/นาที" type="number" class="mb-3" />
-            <v-text-field v-model.number="form.slotCapacity" label="คน/สล็อต" type="number" class="mb-3" />
-          </div>
+        <!-- ✅ หมวดหมู่ (เพิ่มใหม่) -->
+        <v-select
+          v-model="form.categoryId"
+          :items="categories"
+          item-title="name"
+          item-value="id"
+          label="หมวดหมู่"
+          density="comfortable"
+          class="mb-3"
+        />
 
-          <v-switch v-model="form.active" label="เปิดใช้งาน" inset class="mb-3" />
+        <!-- เวลา -->
+        <v-text-field
+          v-model="form.dailyStartTime"
+          label="เวลาเริ่ม (HH:mm)"
+        />
 
-          <v-btn type="submit" :disabled="!valid || loading" :loading="loading" color="primary" block>
-            บันทึก
-          </v-btn>
-        </v-form>
+        <v-text-field
+          v-model="form.dailyEndTime"
+          label="เวลาสิ้นสุด (HH:mm)"
+        />
+
+        <!-- slot -->
+        <v-text-field
+          v-model.number="form.slotCapacity"
+          label="จำนวนคนต่อสล็อต"
+          type="number"
+        />
+
+        <v-text-field
+          v-model.number="form.slotDurationMin"
+          label="ระยะเวลา (นาที)"
+          type="number"
+        />
+
+        <!-- active -->
+        <v-switch
+          v-model="form.active"
+          label="เปิดใช้งาน"
+        />
+
       </v-card-text>
-      <v-card-actions>
-        <v-btn variant="text" @click="$emit('close')">ปิด</v-btn>
+
+      <v-card-actions class="justify-end">
+        <v-btn text @click="$emit('close')">ยกเลิก</v-btn>
+
+        <v-btn color="primary" @click="save">
+          บันทึก
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script setup>
-import { reactive, ref, watch, computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { api } from '@/api/http'
 
 const props = defineProps({
-  service: { type: Object, default: null }
+  service: Object
 })
+
 const emit = defineEmits(['close','saved'])
 
 const visible = ref(true)
-const loading = ref(false)
-const valid = ref(false)
-const r = (v)=> !!v || 'จำเป็น'
 
-const defaults = {
-  name: '', description: '',
-  dailyStartTime: '09:00', dailyEndTime: '18:00',
-  slotDurationMin: 30, slotCapacity: 1,
+/* ✅ หมวด */
+const categories = ref([])
+
+/* ✅ form */
+const form = ref({
+  name: '',
+  categoryId: null,
+  dailyStartTime: '09:00',
+  dailyEndTime: '17:00',
+  slotCapacity: 1,
+  slotDurationMin: 60,
   active: true
-}
-const form = reactive({ ...defaults })
+})
 
-watch(() => props.service, (val) => {
-  Object.assign(form, val ? { ...val } : { ...defaults })
-}, { immediate: true })
-
-async function save() {
-  loading.value = true
+/* ---------- โหลดหมวด ---------- */
+async function loadCategories(){
   try {
-    if (form.id) {
-      await api(`/api/services/${form.id}`, { method:'PUT', body: form })
-    } else {
-      await api('/api/services', { method:'POST', body: form })
-    }
-    emit('saved')
+    const res = await api('/api/categories')
+    categories.value = res
   } catch (e) {
-    alert(e.message)
-  } finally {
-    loading.value = false
+    alert('โหลดหมวดไม่สำเร็จ')
   }
 }
+
+/* ---------- โหลดข้อมูลเดิม ---------- */
+watch(() => props.service, (s) => {
+  if (s) {
+    form.value = {
+      ...s,
+      categoryId: s.category_id || s.categoryId || null
+    }
+  }
+}, { immediate: true })
+
+/* ---------- save ---------- */
+async function save(){
+  try {
+
+    if (!form.value.name) return alert('กรอกชื่อบริการ')
+    if (!form.value.categoryId) return alert('เลือกหมวดหมู่')
+
+    if (form.value.id) {
+      await api(`/api/services/${form.value.id}`, {
+        method: 'PUT',
+        body: form.value
+      })
+    } else {
+      await api('/api/services', {
+        method: 'POST',
+        body: form.value
+      })
+    }
+
+    emit('saved')
+
+  } catch (e) {
+    alert(e.message || 'บันทึกไม่สำเร็จ')
+  }
+}
+
+onMounted(loadCategories)
 </script>
 
 <style scoped>
-.flex { display:flex; }
-.gap { gap: 12px; }
 .mb-3 { margin-bottom: .75rem; }
+.justify-end { display:flex; justify-content:flex-end; }
 </style>
