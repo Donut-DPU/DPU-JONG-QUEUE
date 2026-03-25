@@ -4,17 +4,23 @@ import { authRequired, adminOnly } from "../middleware/auth.js";
 
 const router = Router();
 
-// ดูหมวดหมู่ทั้งหมด
+// GET all categories
 router.get("/", async (req, res) => {
-  const list = await Category.findAll({ where: { active: true } });
+  const list = await Category.findAll({
+    order: [["id", "ASC"]],
+  });
   res.json(list);
 });
 
-// Admin สร้างหมวดหมู่
+// CREATE category (admin)
 router.post("/", authRequired, adminOnly, async (req, res) => {
-  const { name } = req.body;
-  const c = await Category.create({ name });
-  res.status(201).json(c);
+  try {
+    const { name } = req.body;
+    const c = await Category.create({ name });
+    res.json(c);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
 });
 
 export default router;

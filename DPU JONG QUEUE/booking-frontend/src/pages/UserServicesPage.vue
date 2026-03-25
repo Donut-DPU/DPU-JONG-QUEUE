@@ -1,132 +1,115 @@
 <template>
   <div>
-    <h2 class="text-3xl font-bold mb-4">เลือกบริการที่ต้องการ</h2>
+    <h2 class="text-2xl font-bold mb-4">เลือกบริการ</h2>
 
-    <v-row>
-      <v-col cols="12" md="6" lg="4" v-for="s in services" :key="s.id">
-        <v-card class="service-card" elevation="2">
+    <!-- 🔵 เลือกหมวดหมู่ -->
+    <div class="mb-4">
+      <div class="font-bold mb-2">หมวดหมู่</div>
 
-          <v-card-text>
-            <h3 class="service-title">{{ s.name }}</h3>
+      <v-chip-group v-model="selectedCategory" mandatory>
+        <v-chip
+          v-for="c in categories"
+          :key="c.id"
+          :value="c.id"
+          filter
+        >
+          {{ c.name }}
+        </v-chip>
+      </v-chip-group>
+    </div>
 
-            <p class="service-line">
-              เวลาให้บริการ:
-              <span class="strong">{{ s.dailyStartTime }} - {{ s.dailyEndTime }}</span>
-            </p>
+    <!-- 🟣 รายการบริการ -->
+    <v-row v-if="services.length">
+      <v-col
+        v-for="s in services"
+        :key="s.id"
+        cols="12"
+        md="6"
+        lg="4"
+      >
+        <v-card class="service-card">
+          <v-card-title>{{ s.name }}</v-card-title>
 
-            <p class="service-line">
-              ระยะต่อคิว:
-              <span class="strong">{{ s.slotDurationMin }} นาที</span> · รับต่อ slot
-              <span class="strong">{{ s.slotCapacity }} คน</span>
-            </p>
+          <v-card-subtitle>
+            {{ s.dailyStartTime }} - {{ s.dailyEndTime }}
+          </v-card-subtitle>
 
-            <p class="service-desc">
-              {{ s.description || "—" }}
-            </p>
-          </v-card-text>
-
-          <v-card-actions class="service-footer">
-            <v-btn block class="service-btn" @click="openBooking(s)">
-              เลือกบริการ
+          <v-card-actions>
+            <v-btn color="primary" @click="openBooking(s)">
+              จอง
             </v-btn>
           </v-card-actions>
-
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Dialog เดิม -->
+    <!-- 🔴 ไม่มีบริการ -->
+    <v-alert v-else type="info" variant="tonal">
+      ไม่มีบริการในหมวดหมู่นี้
+    </v-alert>
+
+    <!-- 🔵 Dialog -->
     <BookingDialog
-      v-if="dialog"
+      v-if="selectedService"
       :service="selectedService"
-      @close="dialog=false; selectedService=null"
-      @booked="onBooked"
+      @close="selectedService = null"
+      @booked="reload"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { api } from '@/api/http'
-import BookingDialog from '@/components/bookings/BookingDialog.vue'
+import { ref, watch, onMounted } from "vue"
+import { api } from "@/api/http"
+import BookingDialog from "@/components/bookings/BookingDialog.vue"
 
+const categories = ref([])
 const services = ref([])
-const dialog = ref(false)
+
+const selectedCategory = ref(null)
 const selectedService = ref(null)
 
+/* ---------- โหลดหมวดหมู่ ---------- */
+async function loadCategories() {
+  const res = await api("/api/categories")
+  categories.value = res
+
+  if (categories.value.length) {
+    selectedCategory.value = categories.value[0].id
+  }
+}
+
+/* ---------- โหลดบริการตามหมวด ---------- */
+async function loadServices() {
+  if (!selectedCategory.value) return
+
+  const res = await api(`/api/services?categoryId=${selectedCategory.value}`)
+  services.value = res
+}
+
+/* ---------- เปิด dialog ---------- */
+function openBooking(service) {
+  selectedService.value = service
+}
+
+/* ---------- reload ---------- */
+function reload() {
+  loadServices()
+}
+
+/* ---------- watch ---------- */
+watch(selectedCategory, loadServices)
+
+/* ---------- start ---------- */
 onMounted(async () => {
-  const token = localStorage.getItem('token')
-  if (!token) {
-    window.location.href = '/login'
-    return
-  }
-  try {
-    services.value = await api('/api/services')
-  } catch (e) {
-    alert(e.message || 'ไม่สามารถโหลดรายการบริการได้')
-  }
+  await loadCategories()
+  await loadServices()
 })
-
-function openBooking(s) {
-  selectedService.value = s
-  dialog.value = true
-}
-
-function onBooked(b) {
-  dialog.value = false
-  selectedService.value = null
-  alert(`จองสำเร็จ: #${b.id} วันที่ ${b.date} เวลา ${b.time}`)
-}
 </script>
 
 <style scoped>
 .service-card {
-  border-radius: 16px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.service-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #111827;
-}
-
-.service-line {
-  font-size: 14px;
-  color: #4b5563;
-  margin-bottom: 4px;
-}
-
-.service-desc {
-  font-size: 13px;
-  color: #6b7280;
-  margin-top: 8px;
-}
-
-.strong {
-  font-weight: 600;
-  color: #111827;
-}
-
-.service-footer {
-  margin-top: auto;
-  padding: 0 16px 16px;
-}
-
-.service-btn {
-  border-radius: 999px;
-  background: linear-gradient(90deg, #2563eb, #4f46e5);
-  color: #fff;
-  font-weight: 600;
-  text-transform: none;
-  height: 44px;
-}
-
-.service-btn:hover {
-  filter: brightness(1.06);
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
 }
 </style>
