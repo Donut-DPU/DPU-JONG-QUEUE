@@ -151,4 +151,56 @@ router.delete("/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+/**
+ * =========================
+ * holiday/api/services/:id
+ * =========================
+ * เพิ่มวันหยุดบริการ (Admin)
+ */
+router.post("/:id/holiday", async (req, res) => {
+  const { date } = req.body;
+
+  const h = await ServiceHoliday.create({
+    service_id: req.params.id,
+    date,
+  });
+
+  res.json(h);
+});
+
+/**
+ * =========================
+ * weekly-off/api/services/:id
+ * =========================
+ * เพิ่มวันหยุดรายสัปดาห์บริการ (Admin)
+ */
+router.post("/:id/weekly-off", async (req, res) => {
+  const { day } = req.body;
+
+  const w = await ServiceWeeklyOff.create({
+    service_id: req.params.id,
+    day_of_week: day,
+  });
+
+  res.json(w);
+});
+
+/**
+ * =========================
+ * holiday/api/services/:id
+ * =========================
+ * ดึงวันหยุดบริการ (Admin)
+ */
+router.get("/:id/holidays", async (req, res) => {
+  const holidays = await ServiceHoliday.findAll({
+    where: { service_id: req.params.id },
+  });
+
+  const weekly = await ServiceWeeklyOff.findAll({
+    where: { service_id: req.params.id },
+  });
+
+  res.json({ holidays, weekly });
+});
+
 export default router;
