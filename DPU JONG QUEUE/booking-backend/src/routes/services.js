@@ -13,17 +13,20 @@ const router = Router();
  */
 router.get("/", async (req, res) => {
   try {
-    const list = await Service.findAll({
-      include: [
-        {
-          model: Category,
-          attributes: ["id", "name"],
-        },
-      ],
+    const { categoryId } = req.query;
+
+    const where = {};
+
+    if (categoryId) {
+      where.category_id = categoryId;
+    }
+
+    const services = await Service.findAll({
+      where,
       order: [["id", "ASC"]],
     });
 
-    res.json(list);
+    res.json(services);
   } catch (e) {
     res.status(500).json({ message: e.message });
   }

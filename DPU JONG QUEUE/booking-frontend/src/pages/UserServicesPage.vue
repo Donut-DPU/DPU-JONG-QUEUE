@@ -2,28 +2,6 @@
   <div>
     <h2 class="text-2xl font-bold mb-4">เลือกบริการ</h2>
 
-    <!-- 🔴 ADMIN: เพิ่มหมวด -->
-    <div v-if="isAdmin" class="mb-4">
-      <div class="font-bold mb-2">เพิ่มหมวดหมู่</div>
-
-      <div class="flex gap">
-        <v-text-field
-          v-model="newCategory"
-          label="ชื่อหมวด"
-          density="comfortable"
-          hide-details
-        />
-
-        <v-btn
-          color="primary"
-          @click="createCategory"
-          :loading="creating"
-        >
-          เพิ่ม
-        </v-btn>
-      </div>
-    </div>
-
     <!-- 🔵 หมวด -->
     <div class="mb-4">
       <div class="font-bold mb-2">หมวดหมู่</div>
@@ -42,7 +20,7 @@
       </v-chip-group>
     </div>
 
-    <!-- 🟣 แสดงชื่อหมวด -->
+    <!-- 🟣 ชื่อหมวด -->
     <div class="mb-3 text-gray-600">
       หมวด: {{ currentCategoryName }}
     </div>
@@ -103,61 +81,30 @@ const services = ref([]);
 const selectedCategory = ref("all");
 const selectedService = ref(null);
 
-/* ---------- ADMIN ---------- */
-const newCategory = ref("");
-const creating = ref(false);
-
-const isAdmin = computed(() => {
-  return localStorage.getItem("role") === "admin";
-});
-
 /* ---------- LOAD CATEGORY ---------- */
 async function loadCategories() {
   try {
-    const res = await api("/api/categories");
-    categories.value = res;
+    categories.value = await api("/api/categories");
   } catch (e) {
+    console.error(e);
     alert("โหลดหมวดไม่สำเร็จ");
   }
 }
 
-/* ---------- LOAD SERVICE ---------- */
+/* ---------- LOAD SERVICE (สำคัญสุด) ---------- */
 async function loadServices() {
   try {
-    if (selectedCategory.value === "all") {
-      services.value = await api("/api/services");
-      return;
+    let url = "/api/services";
+
+    if (selectedCategory.value !== "all") {
+      url += `?categoryId=${selectedCategory.value}`;
     }
 
-    services.value = await api(
-      `/api/services?categoryId=${selectedCategory.value}`
-    );
+    const res = await api(url);
+    services.value = res;
   } catch (e) {
+    console.error(e);
     alert("โหลดบริการไม่สำเร็จ");
-  }
-}
-
-/* ---------- CREATE CATEGORY ---------- */
-async function createCategory() {
-  if (!newCategory.value) return alert("กรอกชื่อหมวด");
-
-  creating.value = true;
-  try {
-    await api("/api/categories", {
-      method: "POST",
-      body: {
-        name: newCategory.value,
-      },
-    });
-
-    newCategory.value = "";
-
-    await loadCategories();
-    await loadServices();
-  } catch (e) {
-    alert(e.message || "สร้างหมวดไม่สำเร็จ");
-  } finally {
-    creating.value = false;
   }
 }
 
@@ -199,13 +146,5 @@ onMounted(async () => {
 
 .text-gray-600 {
   color: #6b7280;
-}
-
-.flex {
-  display: flex;
-}
-
-.gap {
-  gap: 10px;
 }
 </style>

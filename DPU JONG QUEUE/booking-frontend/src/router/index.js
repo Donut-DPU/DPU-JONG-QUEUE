@@ -1,47 +1,38 @@
-// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 
 // Public
 import LoginPage from '@/pages/LoginPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 
-// User pages
+// User
 import UserShell from '@/layouts/UserShell.vue'
 import UserServicesPage from '@/pages/UserServicesPage.vue'
 import UserBookingsPage from '@/pages/UserBookingsPage.vue'
 import UserAppointmentsPage from '@/pages/UserAppointmentsPage.vue'
 
-
-// Admin pages + layout
+// Admin
 import AdminShell from '@/layouts/AdminShell.vue'
 import AdminServicesPage from '@/pages/admin/AdminServicesPage.vue'
 import AdminBookingsPage from '@/pages/admin/AdminBookingsPage.vue'
 import AdminSchedulePage from '@/pages/admin/AdminSchedulePage.vue'
 import AdminWeekViewPage from '@/pages/admin/AdminWeekViewPage.vue'
 
-
-
 const routes = [
-  // 🔓 public
   { path: '/login', component: LoginPage },
   { path: '/register', component: RegisterPage },
 
-  // 👉 root เปล่า ส่งไป login
   { path: '/', redirect: '/login' },
 
-  // 👤 USER LAYOUT + children
   {
     path: '/',
     component: UserShell,
     children: [
       { path: 'services', component: UserServicesPage },
       { path: 'my-bookings', component: UserBookingsPage },
-      { path: '/my-appointments', component: UserAppointmentsPage }
-      
+      { path: 'my-appointments', component: UserAppointmentsPage }
     ]
   },
 
-  // 🛠 ADMIN LAYOUT + children
   {
     path: '/admin',
     component: AdminShell,
@@ -62,7 +53,6 @@ const routes = [
     ]
   },
 
-  // unknown routes → login
   { path: '/:pathMatch(.*)*', redirect: '/login' }
 ]
 
@@ -71,20 +61,16 @@ const router = createRouter({
   routes
 })
 
-// ✅ หน้า public ที่ไม่ต้องมี token
 const PUBLIC_PATHS = ['/login', '/register']
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
 
-  // ถ้าเป็นหน้า public
   if (PUBLIC_PATHS.includes(to.path)) {
-    // มี token แล้ว → เด้งไปหน้า services
     if (token) return next('/services')
     return next()
   }
 
-  // หน้าอื่นต้องมี token
   if (!token) return next('/login')
 
   next()
