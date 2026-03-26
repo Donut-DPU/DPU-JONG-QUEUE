@@ -8,6 +8,8 @@ import "./models/User.js";
 import "./models/Category.js";
 import "./models/Service.js";
 import "./models/Booking.js";
+import "./models/ServiceHoliday.js";
+import "./models/ServiceWeeklyOff.js"
 
 // ROUTES
 import authRoutes from "./routes/auth.js";
