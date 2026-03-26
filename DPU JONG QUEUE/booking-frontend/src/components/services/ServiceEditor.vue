@@ -48,6 +48,12 @@
           type="number"
         />
 
+        <v-textarea
+          v-model="form.description"
+          label="รายละเอียดบริการ (หมายเหตุ)"
+          rows="3"
+        />
+
         <!-- active -->
         <v-switch
           v-model="form.active"
@@ -90,6 +96,7 @@ const form = ref({
   dailyEndTime: '17:00',
   slotCapacity: 1,
   slotDurationMin: 60,
+  description: "",
   active: true
 })
 
