@@ -1,97 +1,187 @@
 <template>
-  <v-dialog v-model="visible" max-width="500">
-    <v-card>
-      <v-card-title>
-        {{ form.id ? 'แก้ไขบริการ' : 'เพิ่มบริการ' }}
+  <v-dialog v-model="visible" max-width="900">
+    <v-card class="rounded-xl">
+
+      <!-- HEADER -->
+      <v-card-title class="text-h6 font-weight-bold d-flex align-center">
+        <span>{{ form.id ? 'แก้ไขบริการ' : 'เพิ่มบริการ' }}</span>
       </v-card-title>
 
+      <v-divider />
+
       <v-card-text>
+        <v-row class="mt-2">
 
-        <!-- ชื่อ -->
-        <v-text-field
-          v-model="form.name"
-          label="ชื่อบริการ"
-        />
+          <!-- 🔴 LEFT -->
+          <v-col cols="12" md="4">
+            <div class="panel left-panel">
 
-        <!-- หมวด -->
-        <v-select
-          v-model="form.categoryId"
-          :items="categories"
-          item-title="name"
-          item-value="id"
-          label="หมวดหมู่"
-          density="comfortable"
-          class="mb-3"
-        />
+              <!-- WEEKLY -->
+              <div class="section-title">วันหยุดประจำ</div>
 
-        <!-- เวลา -->
-        <v-text-field
-          v-model="form.dailyStartTime"
-          label="เวลาเริ่ม (HH:mm)"
-        />
+              <v-select
+                v-model="selectedDays"
+                :items="days"
+                item-title="title"
+                item-value="value"
+                label="เลือกหลายวัน"
+                multiple
+                chips
+                density="compact"
+                variant="outlined"
+              />
 
-        <v-text-field
-          v-model="form.dailyEndTime"
-          label="เวลาสิ้นสุด (HH:mm)"
-        />
+              <v-divider class="my-3"/>
 
-        <!-- slot -->
-        <v-text-field
-          v-model.number="form.slotCapacity"
-          label="จำนวนคนต่อสล็อต"
-          type="number"
-        />
+              <!-- CALENDAR -->
+              <div class="section-title">เลือกวันหยุด</div>
 
-        <v-text-field
-          v-model.number="form.slotDurationMin"
-          label="ระยะเวลา (นาที)"
-          type="number"
-        />
+              <v-date-picker
+                v-model="calendarDate"
+                :allowed-dates="allowedDates"
+                class="calendar-small"
+              />
 
-        <v-textarea
-          v-model="form.description"
-          label="รายละเอียดบริการ (หมายเหตุ)"
-          rows="3"
-        />
+              <v-btn
+                block
+                color="error"
+                variant="flat"
+                class="mt-2"
+                @click="addHoliday"
+              >
+                + เพิ่มวันหยุด
+              </v-btn>
 
-        <!-- active -->
-        <v-switch
-          v-model="form.active"
-          label="เปิดใช้งาน"
-        />
+              <!-- LIST -->
+              <div class="mt-4">
+                <div class="sub-title">วันหยุดทั้งหมด</div>
 
-        <!-- ===== วันหยุดรายวัน ===== -->
-        <v-text-field
-          v-model="holidayDate"
-          label="เพิ่มวันหยุด (YYYY-MM-DD)"
-        />
-        <v-btn class="mb-3" @click="addHoliday">
-          เพิ่มวันหยุด
-        </v-btn>
+                <div class="holiday-list">
+                  <v-chip
+                    v-for="(h, i) in holidays"
+                    :key="i"
+                    closable
+                    size="small"
+                    class="chip"
+                    color="red"
+                    @click:close="confirmRemoveHoliday(i)"
+                  >
+                    {{ formatDate(h) }}
+                  </v-chip>
+                </div>
+              </div>
 
-        <!-- ===== วันหยุดประจำ ===== -->
-        <v-select
-          v-model="selectedDay"
-          :items="days"
-          item-title="title"
-          item-value="value"
-          label="วันหยุดประจำ"
-        />
+            </div>
+          </v-col>
 
-        <v-btn @click="addWeeklyOff">
-          เพิ่มวันหยุดประจำ
-        </v-btn>
+          <!-- 🟢 RIGHT -->
+          <v-col cols="12" md="8">
+            <div class="panel right-panel">
 
+              <div class="section-title">ข้อมูลบริการ</div>
+
+              <v-text-field
+                v-model="form.name"
+                label="ชื่อบริการ"
+                variant="outlined"
+                density="comfortable"
+              />
+
+              <v-select
+                v-model="form.categoryId"
+                :items="categories"
+                item-title="name"
+                item-value="id"
+                label="หมวดหมู่"
+                variant="outlined"
+                density="comfortable"
+              />
+
+              <v-row>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model="form.dailyStartTime"
+                    label="เวลาเริ่ม"
+                    variant="outlined"
+                  />
+                </v-col>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model="form.dailyEndTime"
+                    label="เวลาสิ้นสุด"
+                    variant="outlined"
+                  />
+                </v-col>
+              </v-row>
+
+              <v-row>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model.number="form.slotCapacity"
+                    type="number"
+                    label="จำนวนคน"
+                    variant="outlined"
+                  />
+                </v-col>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model.number="form.slotDurationMin"
+                    type="number"
+                    label="นาที"
+                    variant="outlined"
+                  />
+                </v-col>
+              </v-row>
+
+              <v-textarea
+                v-model="form.description"
+                label="รายละเอียด"
+                rows="3"
+                variant="outlined"
+              />
+
+              <v-switch
+                v-model="form.active"
+                label="เปิดใช้งาน"
+                color="primary"
+              />
+
+            </div>
+          </v-col>
+
+        </v-row>
       </v-card-text>
 
-      <v-card-actions class="justify-end">
-        <v-btn text @click="$emit('close')">ยกเลิก</v-btn>
+      <v-divider />
 
-        <v-btn color="primary" @click="save">
+      <!-- ACTION -->
+      <v-card-actions class="justify-end px-4 pb-4">
+        <v-btn variant="text" @click="$emit('close')">ยกเลิก</v-btn>
+        <v-btn color="primary" variant="flat" @click="save">
           บันทึก
         </v-btn>
       </v-card-actions>
+
     </v-card>
+
+    <!-- DELETE CONFIRM -->
+    <v-dialog v-model="deleteDialog" max-width="350">
+      <v-card class="rounded-lg">
+        <v-card-title class="text-h6">ยืนยันลบ</v-card-title>
+
+        <v-card-text>
+          ต้องการลบวันหยุดนี้ใช่หรือไม่?
+        </v-card-text>
+
+        <v-card-actions class="justify-end">
+          <v-btn variant="text" @click="deleteDialog=false">ยกเลิก</v-btn>
+          <v-btn color="error" variant="flat" @click="removeHoliday">
+            ลบ
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </v-dialog>
 </template>
 
@@ -99,18 +189,19 @@
 import { ref, watch, onMounted } from 'vue'
 import { api } from '@/api/http'
 
-const props = defineProps({
-  service: Object
-})
-
+const props = defineProps({ service: Object })
 const emit = defineEmits(['close','saved'])
 
 const visible = ref(true)
 
-/* ===== หมวด ===== */
 const categories = ref([])
+const holidays = ref([])
+const selectedDays = ref([])
+const calendarDate = ref(null)
 
-/* ===== form ===== */
+const deleteDialog = ref(false)
+const deleteIndex = ref(null)
+
 const form = ref({
   name: '',
   categoryId: null,
@@ -118,17 +209,9 @@ const form = ref({
   dailyEndTime: '17:00',
   slotCapacity: 1,
   slotDurationMin: 60,
-  description: "",
+  description: '',
   active: true
 })
-
-/* ===== เพิ่มใหม่ตรงนี้ ===== */
-
-// วันหยุดรายวัน
-const holidayDate = ref('')
-
-// วันหยุดประจำ
-const selectedDay = ref(null)
 
 const days = [
   { title: "อาทิตย์", value: 0 },
@@ -140,87 +223,94 @@ const days = [
   { title: "เสาร์", value: 6 },
 ]
 
-/* ---------- โหลดหมวด ---------- */
 async function loadCategories(){
-  try {
-    const res = await api('/api/categories')
-    categories.value = res
-  } catch (e) {
-    alert('โหลดหมวดไม่สำเร็จ')
-  }
+  categories.value = await api('/api/categories')
 }
 
-/* ---------- โหลดข้อมูลเดิม ---------- */
-watch(() => props.service, (s) => {
+async function loadHoliday(){
+  if (!props.service?.id) return
+  const res = await api(`/api/services/${props.service.id}/holidays`)
+  holidays.value = (res.holidays || []).map(h => h.date)
+  selectedDays.value = (res.weekly || []).map(w => w.day_of_week)
+}
+
+watch(() => props.service, async (s) => {
   if (s) {
     form.value = {
       ...s,
-      categoryId: s.category_id || s.categoryId || null
+      categoryId: s.category_id || s.categoryId
     }
+    await loadHoliday()
   }
 }, { immediate: true })
 
-/* ---------- save ---------- */
+function allowedDates(val){
+  const day = new Date(val).getDay()
+  return !selectedDays.value.includes(day)
+}
+
+function formatDate(d){
+  const date = new Date(d)
+  const dd = String(date.getDate()).padStart(2,'0')
+  const mm = String(date.getMonth()+1).padStart(2,'0')
+  const yyyy = date.getFullYear()
+  return `${dd}-${mm}-${yyyy}`
+}
+
+function addHoliday(){
+  if (!calendarDate.value) return alert('เลือกวัน')
+  if (!holidays.value.includes(calendarDate.value)) {
+    holidays.value.push(calendarDate.value)
+  }
+}
+
+function confirmRemoveHoliday(i){
+  deleteIndex.value = i
+  deleteDialog.value = true
+}
+
+function removeHoliday(){
+  holidays.value.splice(deleteIndex.value, 1)
+  deleteDialog.value = false
+}
+
 async function save(){
   try {
+    if (!form.value.name) return alert('กรอกชื่อ')
 
-    if (!form.value.name) return alert('กรอกชื่อบริการ')
-    if (!form.value.categoryId) return alert('เลือกหมวดหมู่')
+    let serviceId = form.value.id
 
-    if (form.value.id) {
-      await api(`/api/services/${form.value.id}`, {
+    if (serviceId) {
+      await api(`/api/services/${serviceId}`, {
         method: 'PUT',
         body: form.value
       })
     } else {
-      await api('/api/services', {
+      const res = await api('/api/services', {
         method: 'POST',
         body: form.value
+      })
+      serviceId = res.id
+    }
+
+    for (const d of holidays.value){
+      await api(`/api/services/${serviceId}/holiday`, {
+        method: 'POST',
+        body: { date: d }
+      })
+    }
+
+    for (const d of selectedDays.value){
+      await api(`/api/services/${serviceId}/weekly-off`, {
+        method: 'POST',
+        body: { day: d }
       })
     }
 
     emit('saved')
 
   } catch (e) {
-    alert(e.message || 'บันทึกไม่สำเร็จ')
-  }
-}
-
-/* ---------- วันหยุด ---------- */
-async function addHoliday() {
-  try {
-    if (!props.service?.id) return alert('กรุณาบันทึกบริการก่อน')
-    if (!holidayDate.value) return alert('กรุณาเลือกวันที่')
-
-    await api(`/api/services/${props.service.id}/holiday`, {
-      method: "POST",
-      body: { date: holidayDate.value },
-    })
-
-    holidayDate.value = ''
-    alert('เพิ่มวันหยุดสำเร็จ')
-
-  } catch (e) {
-    alert('เพิ่มวันหยุดไม่สำเร็จ')
-  }
-}
-
-/* ---------- วันหยุดประจำ ---------- */
-async function addWeeklyOff() {
-  try {
-    if (!props.service?.id) return alert('กรุณาบันทึกบริการก่อน')
-    if (selectedDay.value === null) return alert('กรุณาเลือกวัน')
-
-    await api(`/api/services/${props.service.id}/weekly-off`, {
-      method: "POST",
-      body: { day: selectedDay.value },
-    })
-
-    selectedDay.value = null
-    alert('เพิ่มวันหยุดประจำสำเร็จ')
-
-  } catch (e) {
-    alert('เพิ่มวันหยุดประจำไม่สำเร็จ')
+    alert('บันทึกไม่สำเร็จ')
   }
 }
 
@@ -228,6 +318,44 @@ onMounted(loadCategories)
 </script>
 
 <style scoped>
-.mb-3 { margin-bottom: .75rem; }
-.justify-end { display:flex; justify-content:flex-end; }
+.panel {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.left-panel {
+  background: #fafafa;
+}
+
+.right-panel {
+  background: #ffffff;
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.sub-title {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.calendar-small {
+  transform: scale(0.7);
+  transform-origin: top left;
+}
+
+.holiday-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  font-size: 12px;
+}
 </style>

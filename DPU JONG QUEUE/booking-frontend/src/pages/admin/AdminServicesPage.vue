@@ -1,12 +1,12 @@
 <template>
   <div>
-    <!-- 🔹 HEADER -->
+    <!-- HEADER -->
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-2xl font-bold">บริการ</h2>
 
       <div class="flex gap">
         <v-btn color="secondary" @click="categoryDialog = true">
-          + เพิ่มหมวดหมู่
+          + จัดการหมวดหมู่
         </v-btn>
 
         <v-btn color="primary" @click="openCreate">
@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <!-- ✅ FILTER หมวด -->
+    <!-- FILTER -->
     <div class="flex gap mb-4">
       <v-select
         v-model="selectedCategory"
@@ -28,19 +28,19 @@
       />
     </div>
 
-    <!-- 🔹 TABLE -->
-    <v-card class="services-card" elevation="1">
+    <!-- TABLE -->
+    <v-card class="services-card">
       <v-card-text>
         <v-table>
           <thead>
             <tr>
               <th>ชื่อบริการ</th>
               <th>หมวดหมู่</th>
-              <th>เวลาเปิด-ปิด</th>
-              <th>คิว/สล็อต</th>
-              <th>ระยะ/นาที</th>
+              <th>เวลา</th>
+              <th>สล็อต</th>
+              <th>นาที</th>
               <th>สถานะ</th>
-              <th style="width:180px;"></th>
+              <th></th>
             </tr>
           </thead>
 
@@ -59,10 +59,8 @@
               </td>
 
               <td>
-                <v-btn size="small" class="mr-2" @click="openEdit(s)">
-                  แก้ไข
-                </v-btn>
-                <v-btn size="small" color="error" @click="remove(s)">
+                <v-btn size="small" @click="openEdit(s)">แก้ไข</v-btn>
+                <v-btn size="small" color="error" @click="openDeleteService(s)">
                   ลบ
                 </v-btn>
               </td>
@@ -79,20 +77,14 @@
 
       <v-divider />
 
-      <!-- 🔹 PAGINATION -->
+      <!-- PAGINATION -->
       <div v-if="pageCount > 1" class="pagination-wrap">
-        <div class="pagination-info">
-          แสดง {{ rangeStart }}–{{ rangeEnd }} จาก {{ services.length }} รายการ
-        </div>
-
-        <v-pagination
-          v-model="page"
-          :length="pageCount"
-        />
+        <div>{{ rangeStart }}–{{ rangeEnd }} / {{ services.length }}</div>
+        <v-pagination v-model="page" :length="pageCount" />
       </div>
     </v-card>
 
-    <!-- 🔵 Dialog สร้าง/แก้ service -->
+    <!-- SERVICE EDITOR -->
     <ServiceEditor
       v-if="dialog"
       :service="editing"
@@ -100,26 +92,88 @@
       @saved="onSaved"
     />
 
-    <!-- 🟣 Dialog เพิ่มหมวด -->
-    <v-dialog v-model="categoryDialog" max-width="400">
+    <!-- CATEGORY MANAGER -->
+    <v-dialog v-model="categoryDialog" max-width="500">
       <v-card>
-        <v-card-title>เพิ่มหมวดหมู่</v-card-title>
+        <v-card-title>จัดการหมวดหมู่</v-card-title>
 
         <v-card-text>
-          <v-text-field
-            v-model="categoryName"
-            label="ชื่อหมวด"
-          />
+
+          <!-- ADD -->
+          <div class="flex gap mb-3">
+            <v-text-field v-model="categoryName" label="ชื่อหมวดใหม่"/>
+            <v-btn color="primary" @click="createCategory">เพิ่ม</v-btn>
+          </div>
+
+          <!-- LIST -->
+          <div v-for="c in categories" :key="c.id" class="category-item">
+            <span>{{ c.name }}</span>
+
+            <div class="flex gap">
+              <v-tooltip text="แก้ไข">
+                <template #activator="{ props }">
+                  <v-btn v-bind="props" size="x-small" icon @click="openEditDialog(c)">
+                    ✏️
+                  </v-btn>
+                </template>
+              </v-tooltip>
+
+              <v-tooltip text="ลบ">
+                <template #activator="{ props }">
+                  <v-btn v-bind="props" size="x-small" icon color="error" @click="openDeleteCategory(c)">
+                    🗑️
+                  </v-btn>
+                </template>
+              </v-tooltip>
+            </div>
+          </div>
+
         </v-card-text>
 
         <v-card-actions class="justify-end">
-          <v-btn text @click="categoryDialog=false">
-            ยกเลิก
-          </v-btn>
+          <v-btn text @click="categoryDialog=false">ปิด</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-          <v-btn color="primary" @click="createCategory">
-            บันทึก
-          </v-btn>
+    <!-- EDIT CATEGORY -->
+    <v-dialog v-model="editDialog" max-width="400">
+      <v-card>
+        <v-card-title>แก้ไขหมวด</v-card-title>
+        <v-card-text>
+          <v-text-field v-model="editName"/>
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn text @click="editDialog=false">ยกเลิก</v-btn>
+          <v-btn color="primary" @click="saveEdit">บันทึก</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- DELETE SERVICE -->
+    <v-dialog v-model="deleteServiceDialog" max-width="400">
+      <v-card>
+        <v-card-title>ยืนยันลบบริการ</v-card-title>
+        <v-card-text>
+          ลบ "{{ deleteServiceItem?.name }}" ?
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn text @click="deleteServiceDialog=false">ยกเลิก</v-btn>
+          <v-btn color="error" @click="confirmDeleteService">ลบ</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- DELETE CATEGORY -->
+    <v-dialog v-model="deleteCategoryDialog" max-width="400">
+      <v-card>
+        <v-card-title>ยืนยันลบหมวด</v-card-title>
+        <v-card-text>
+          ลบ "{{ deleteCategoryItem?.name }}" ?
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn text @click="deleteCategoryDialog=false">ยกเลิก</v-btn>
+          <v-btn color="error" @click="confirmDeleteCategory">ลบ</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -133,22 +187,35 @@ import { api } from '@/api/http'
 import ServiceEditor from '@/components/services/ServiceEditor.vue'
 
 const services = ref([])
+const categories = ref([])
+
 const dialog = ref(false)
 const editing = ref(null)
 
-/* ✅ หมวด */
-const categories = ref([])
 const selectedCategory = ref(null)
 
 const categoryDialog = ref(false)
 const categoryName = ref('')
 
-/* 🔹 pagination */
+/* EDIT */
+const editDialog = ref(false)
+const editItem = ref(null)
+const editName = ref('')
+
+/* DELETE SERVICE */
+const deleteServiceDialog = ref(false)
+const deleteServiceItem = ref(null)
+
+/* DELETE CATEGORY */
+const deleteCategoryDialog = ref(false)
+const deleteCategoryItem = ref(null)
+
+/* pagination */
 const page = ref(1)
 const itemsPerPage = 10
 
 const pageCount = computed(() =>
-  Math.max(1, Math.ceil(services.value.length / itemsPerPage))
+  Math.ceil(services.value.length / itemsPerPage) || 1
 )
 
 const pagedServices = computed(() => {
@@ -156,27 +223,20 @@ const pagedServices = computed(() => {
   return services.value.slice(start, start + itemsPerPage)
 })
 
-const rangeStart = computed(() => {
-  if (!services.value.length) return 0
-  return (page.value - 1) * itemsPerPage + 1
-})
+const rangeStart = computed(() =>
+  services.value.length ? (page.value - 1) * itemsPerPage + 1 : 0
+)
 
-const rangeEnd = computed(() => {
-  return Math.min(page.value * itemsPerPage, services.value.length)
-})
+const rangeEnd = computed(() =>
+  Math.min(page.value * itemsPerPage, services.value.length)
+)
 
-watch(services, () => {
-  if (page.value > pageCount.value) page.value = 1
-})
-
-/* ---------- API ---------- */
+/* LOAD */
 async function loadServices() {
   let url = '/api/services?all=1'
-
   if (selectedCategory.value) {
     url += `&categoryId=${selectedCategory.value}`
   }
-
   services.value = await api(url)
 }
 
@@ -184,55 +244,75 @@ async function loadCategories() {
   categories.value = await api('/api/categories')
 }
 
-/* 🔥 filter เมื่อเปลี่ยนหมวด */
-watch(selectedCategory, () => {
-  loadServices()
-})
+watch(selectedCategory, loadServices)
 
-/* ---------- SERVICE ---------- */
-function openCreate(){
+/* SERVICE */
+function openCreate() {
   editing.value = null
   dialog.value = true
 }
 
-function openEdit(s){
+function openEdit(s) {
   editing.value = { ...s }
   dialog.value = true
 }
 
-async function remove(s){
-  if (!confirm(`ลบบริการ "${s.name}" ?`)) return
-  await api(`/api/services/${s.id}`, { method: 'DELETE' })
-  await loadServices()
+function openDeleteService(s) {
+  deleteServiceItem.value = s
+  deleteServiceDialog.value = true
 }
 
-async function onSaved(){
+async function confirmDeleteService() {
+  await api(`/api/services/${deleteServiceItem.value.id}`, { method: 'DELETE' })
+  deleteServiceDialog.value = false
+  loadServices()
+}
+
+async function onSaved() {
   dialog.value = false
-  editing.value = null
-  await loadServices()
+  loadServices()
 }
 
-/* ---------- CATEGORY ---------- */
-async function createCategory(){
-  if (!categoryName.value) return alert('กรอกชื่อหมวด')
-
-  try {
-    await api('/api/categories', {
-      method: 'POST',
-      body: { name: categoryName.value }
-    })
-
-    categoryDialog.value = false
-    categoryName.value = ''
-    await loadCategories()
-    alert('เพิ่มหมวดสำเร็จ')
-
-  } catch (e) {
-    alert(e.message || 'สร้างหมวดไม่สำเร็จ')
-  }
+/* CATEGORY */
+async function createCategory() {
+  if (!categoryName.value) return
+  await api('/api/categories', {
+    method: 'POST',
+    body: { name: categoryName.value }
+  })
+  categoryName.value = ''
+  loadCategories()
 }
 
-/* ---------- INIT ---------- */
+function openEditDialog(c) {
+  editItem.value = c
+  editName.value = c.name
+  editDialog.value = true
+}
+
+async function saveEdit() {
+  await api(`/api/categories/${editItem.value.id}`, {
+    method: 'PUT',
+    body: { name: editName.value }
+  })
+  editDialog.value = false
+  loadCategories()
+}
+
+function openDeleteCategory(c) {
+  deleteCategoryItem.value = c
+  deleteCategoryDialog.value = true
+}
+
+async function confirmDeleteCategory() {
+  await api(`/api/categories/${deleteCategoryItem.value.id}`, {
+    method: 'DELETE'
+  })
+  deleteCategoryDialog.value = false
+  loadCategories()
+}
+
+/* INIT */
 onMounted(() => {
   loadServices()
   loadCategories()
@@ -244,14 +324,11 @@ onMounted(() => {
 .items-center { align-items:center; }
 .justify-between { justify-content:space-between; }
 .mb-4 { margin-bottom:1rem; }
-.text-2xl { font-size:1.5rem; }
-.font-bold { font-weight:700; }
-.mr-2 { margin-right:.5rem; }
-.gap { gap: 10px; }
+.gap { gap:10px; }
 
 .services-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
 }
 
 .text-center { text-align:center; }
@@ -260,12 +337,12 @@ onMounted(() => {
 .pagination-wrap {
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  padding: 8px 16px 12px;
+  padding:10px;
 }
 
-.pagination-info {
-  font-size: 13px;
-  color:#6b7280;
+.category-item {
+  display:flex;
+  justify-content:space-between;
+  padding:8px 0;
 }
 </style>
