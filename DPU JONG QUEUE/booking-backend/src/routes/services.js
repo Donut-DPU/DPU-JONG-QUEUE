@@ -1,3 +1,4 @@
+// booking-backend/src/routes/services.js
 import { Router } from "express";
 import { authRequired, adminOnly } from "../middleware/auth.js";
 import Service from "../models/Service.js";
@@ -21,8 +22,15 @@ router.get("/", async (req, res) => {
       where.category_id = categoryId;
     }
 
+    // ✅ แก้ตรงนี้ (เพิ่ม include Category)
     const services = await Service.findAll({
       where,
+      include: [
+        {
+          model: Category,
+          attributes: ["id", "name"]
+        }
+      ],
       order: [["id", "ASC"]],
     });
 
@@ -148,7 +156,6 @@ router.delete("/:id", authRequired, adminOnly, async (req, res) => {
  * =========================
  * POST /api/services/:id/holiday
  * =========================
- * เพิ่มวันหยุด (Admin)
  */
 router.post("/:id/holiday", authRequired, adminOnly, async (req, res) => {
   try {
@@ -158,14 +165,10 @@ router.post("/:id/holiday", authRequired, adminOnly, async (req, res) => {
       return res.status(400).json({ message: "date required" });
     }
 
-    console.log("ADD HOLIDAY:", req.params.id, date);
-
     const h = await ServiceHoliday.create({
       service_id: req.params.id,
       date,
     });
-
-    console.log("CREATED HOLIDAY:", h.toJSON());
 
     res.json(h);
   } catch (e) {
@@ -178,7 +181,6 @@ router.post("/:id/holiday", authRequired, adminOnly, async (req, res) => {
  * =========================
  * POST /api/services/:id/weekly-off
  * =========================
- * เพิ่มวันหยุดรายสัปดาห์ (Admin)
  */
 router.post("/:id/weekly-off", authRequired, adminOnly, async (req, res) => {
   try {
@@ -188,14 +190,10 @@ router.post("/:id/weekly-off", authRequired, adminOnly, async (req, res) => {
       return res.status(400).json({ message: "day required (0-6)" });
     }
 
-    console.log("ADD WEEKLY OFF:", req.params.id, day);
-
     const w = await ServiceWeeklyOff.create({
       service_id: req.params.id,
       day_of_week: day,
     });
-
-    console.log("CREATED WEEKLY:", w.toJSON());
 
     res.json(w);
   } catch (e) {

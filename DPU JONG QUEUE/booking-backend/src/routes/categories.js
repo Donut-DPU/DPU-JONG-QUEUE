@@ -4,23 +4,34 @@ import { authRequired, adminOnly } from "../middleware/auth.js";
 
 const router = Router();
 
-// GET all categories
+// GET
 router.get("/", async (req, res) => {
-  const list = await Category.findAll({
-    order: [["id", "ASC"]],
-  });
+  const list = await Category.findAll({ order: [["id","ASC"]] });
   res.json(list);
 });
 
-// CREATE category (admin)
+// CREATE
 router.post("/", authRequired, adminOnly, async (req, res) => {
-  try {
-    const { name } = req.body;
-    const c = await Category.create({ name });
-    res.json(c);
-  } catch (e) {
-    res.status(500).json({ message: e.message });
-  }
+  const c = await Category.create({ name: req.body.name });
+  res.json(c);
+});
+
+// UPDATE
+router.put("/:id", authRequired, adminOnly, async (req, res) => {
+  const c = await Category.findByPk(req.params.id);
+  if (!c) return res.status(404).json({ message: "not found" });
+
+  await c.update({ name: req.body.name });
+  res.json(c);
+});
+
+// DELETE
+router.delete("/:id", authRequired, adminOnly, async (req, res) => {
+  const c = await Category.findByPk(req.params.id);
+  if (!c) return res.status(404).json({ message: "not found" });
+
+  await c.destroy();
+  res.json({ message: "deleted" });
 });
 
 export default router;

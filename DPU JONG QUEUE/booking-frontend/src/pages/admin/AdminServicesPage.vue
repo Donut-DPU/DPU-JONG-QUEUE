@@ -5,16 +5,27 @@
       <h2 class="text-2xl font-bold">บริการ</h2>
 
       <div class="flex gap">
-        <!-- ✅ เพิ่มหมวด -->
         <v-btn color="secondary" @click="categoryDialog = true">
           + เพิ่มหมวดหมู่
         </v-btn>
 
-        <!-- ของเดิม -->
         <v-btn color="primary" @click="openCreate">
           + เพิ่มบริการ
         </v-btn>
       </div>
+    </div>
+
+    <!-- ✅ FILTER หมวด -->
+    <div class="flex gap mb-4">
+      <v-select
+        v-model="selectedCategory"
+        :items="categories"
+        item-title="name"
+        item-value="id"
+        label="เลือกหมวดหมู่"
+        clearable
+        style="max-width:250px"
+      />
     </div>
 
     <!-- 🔹 TABLE -->
@@ -24,7 +35,7 @@
           <thead>
             <tr>
               <th>ชื่อบริการ</th>
-              <th>หมวดหมู่</th> <!-- ✅ เพิ่ม -->
+              <th>หมวดหมู่</th>
               <th>เวลาเปิด-ปิด</th>
               <th>คิว/สล็อต</th>
               <th>ระยะ/นาที</th>
@@ -36,10 +47,7 @@
           <tbody>
             <tr v-for="s in pagedServices" :key="s.id">
               <td>{{ s.name }}</td>
-
-              <!-- ✅ แสดงหมวด -->
               <td>{{ s.Category?.name || '-' }}</td>
-
               <td>{{ s.dailyStartTime }} - {{ s.dailyEndTime }}</td>
               <td>{{ s.slotCapacity }}</td>
               <td>{{ s.slotDurationMin }}</td>
@@ -129,6 +137,9 @@ const dialog = ref(false)
 const editing = ref(null)
 
 /* ✅ หมวด */
+const categories = ref([])
+const selectedCategory = ref(null)
+
 const categoryDialog = ref(false)
 const categoryName = ref('')
 
@@ -160,8 +171,23 @@ watch(services, () => {
 
 /* ---------- API ---------- */
 async function loadServices() {
-  services.value = await api('/api/services?all=1')
+  let url = '/api/services?all=1'
+
+  if (selectedCategory.value) {
+    url += `&categoryId=${selectedCategory.value}`
+  }
+
+  services.value = await api(url)
 }
+
+async function loadCategories() {
+  categories.value = await api('/api/categories')
+}
+
+/* 🔥 filter เมื่อเปลี่ยนหมวด */
+watch(selectedCategory, () => {
+  loadServices()
+})
 
 /* ---------- SERVICE ---------- */
 function openCreate(){
@@ -198,6 +224,7 @@ async function createCategory(){
 
     categoryDialog.value = false
     categoryName.value = ''
+    await loadCategories()
     alert('เพิ่มหมวดสำเร็จ')
 
   } catch (e) {
@@ -205,7 +232,11 @@ async function createCategory(){
   }
 }
 
-onMounted(loadServices)
+/* ---------- INIT ---------- */
+onMounted(() => {
+  loadServices()
+  loadCategories()
+})
 </script>
 
 <style scoped>
