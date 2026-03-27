@@ -2,21 +2,19 @@
   <v-dialog v-model="visible" max-width="900">
     <v-card class="rounded-xl">
 
-      <!-- HEADER -->
-      <v-card-title class="text-h6 font-weight-bold d-flex align-center">
-        <span>{{ form.id ? 'แก้ไขบริการ' : 'เพิ่มบริการ' }}</span>
+      <v-card-title class="text-h6 font-weight-bold">
+        {{ form.id ? 'แก้ไขบริการ' : 'เพิ่มบริการ' }}
       </v-card-title>
 
       <v-divider />
 
       <v-card-text>
-        <v-row class="mt-2">
+        <v-row>
 
-          <!-- 🔴 LEFT -->
+          <!-- LEFT -->
           <v-col cols="12" md="4">
             <div class="panel left-panel">
 
-              <!-- WEEKLY -->
               <div class="section-title">วันหยุดประจำ</div>
 
               <v-select
@@ -24,16 +22,14 @@
                 :items="days"
                 item-title="title"
                 item-value="value"
-                label="เลือกหลายวัน"
                 multiple
                 chips
-                density="compact"
+                label="เลือกหลายวัน"
                 variant="outlined"
               />
 
               <v-divider class="my-3"/>
 
-              <!-- CALENDAR -->
               <div class="section-title">เลือกวันหยุด</div>
 
               <v-date-picker
@@ -42,18 +38,11 @@
                 class="calendar-small"
               />
 
-              <v-btn
-                block
-                color="error"
-                variant="flat"
-                class="mt-2"
-                @click="addHoliday"
-              >
+              <v-btn block color="error" class="mt-2" @click="addHoliday">
                 + เพิ่มวันหยุด
               </v-btn>
 
-              <!-- LIST -->
-              <div class="mt-4">
+              <div class="mt-3">
                 <div class="sub-title">วันหยุดทั้งหมด</div>
 
                 <div class="holiday-list">
@@ -62,7 +51,6 @@
                     :key="i"
                     closable
                     size="small"
-                    class="chip"
                     color="red"
                     @click:close="confirmRemoveHoliday(i)"
                   >
@@ -74,77 +62,35 @@
             </div>
           </v-col>
 
-          <!-- 🟢 RIGHT -->
+          <!-- RIGHT -->
           <v-col cols="12" md="8">
             <div class="panel right-panel">
 
               <div class="section-title">ข้อมูลบริการ</div>
 
-              <v-text-field
-                v-model="form.name"
-                label="ชื่อบริการ"
-                variant="outlined"
-                density="comfortable"
-              />
-
-              <v-select
-                v-model="form.categoryId"
-                :items="categories"
-                item-title="name"
-                item-value="id"
-                label="หมวดหมู่"
-                variant="outlined"
-                density="comfortable"
-              />
+              <v-text-field v-model="form.name" label="ชื่อบริการ"/>
+              <v-select v-model="form.categoryId" :items="categories" item-title="name" item-value="id" label="หมวดหมู่"/>
 
               <v-row>
                 <v-col cols="6">
-                  <v-text-field
-                    v-model="form.dailyStartTime"
-                    label="เวลาเริ่ม"
-                    variant="outlined"
-                  />
+                  <v-text-field v-model="form.dailyStartTime" label="เวลาเริ่ม"/>
                 </v-col>
                 <v-col cols="6">
-                  <v-text-field
-                    v-model="form.dailyEndTime"
-                    label="เวลาสิ้นสุด"
-                    variant="outlined"
-                  />
+                  <v-text-field v-model="form.dailyEndTime" label="เวลาสิ้นสุด"/>
                 </v-col>
               </v-row>
 
               <v-row>
                 <v-col cols="6">
-                  <v-text-field
-                    v-model.number="form.slotCapacity"
-                    type="number"
-                    label="จำนวนคน"
-                    variant="outlined"
-                  />
+                  <v-text-field v-model.number="form.slotCapacity" type="number" label="จำนวนคน"/>
                 </v-col>
                 <v-col cols="6">
-                  <v-text-field
-                    v-model.number="form.slotDurationMin"
-                    type="number"
-                    label="นาที"
-                    variant="outlined"
-                  />
+                  <v-text-field v-model.number="form.slotDurationMin" type="number" label="นาที"/>
                 </v-col>
               </v-row>
 
-              <v-textarea
-                v-model="form.description"
-                label="รายละเอียด"
-                rows="3"
-                variant="outlined"
-              />
-
-              <v-switch
-                v-model="form.active"
-                label="เปิดใช้งาน"
-                color="primary"
-              />
+              <v-textarea v-model="form.description" label="รายละเอียด"/>
+              <v-switch v-model="form.active" label="เปิดใช้งาน"/>
 
             </div>
           </v-col>
@@ -154,30 +100,20 @@
 
       <v-divider />
 
-      <!-- ACTION -->
-      <v-card-actions class="justify-end px-4 pb-4">
-        <v-btn variant="text" @click="$emit('close')">ยกเลิก</v-btn>
-        <v-btn color="primary" variant="flat" @click="save">
-          บันทึก
-        </v-btn>
+      <v-card-actions class="justify-end">
+        <v-btn text @click="$emit('close')">ยกเลิก</v-btn>
+        <v-btn color="primary" @click="save">บันทึก</v-btn>
       </v-card-actions>
 
     </v-card>
 
-    <!-- DELETE CONFIRM -->
+    <!-- DELETE -->
     <v-dialog v-model="deleteDialog" max-width="350">
-      <v-card class="rounded-lg">
-        <v-card-title class="text-h6">ยืนยันลบ</v-card-title>
-
-        <v-card-text>
-          ต้องการลบวันหยุดนี้ใช่หรือไม่?
-        </v-card-text>
-
+      <v-card>
+        <v-card-title>ยืนยันลบ</v-card-title>
         <v-card-actions class="justify-end">
-          <v-btn variant="text" @click="deleteDialog=false">ยกเลิก</v-btn>
-          <v-btn color="error" variant="flat" @click="removeHoliday">
-            ลบ
-          </v-btn>
+          <v-btn text @click="deleteDialog=false">ยกเลิก</v-btn>
+          <v-btn color="error" @click="removeHoliday">ลบ</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -201,6 +137,9 @@ const calendarDate = ref(null)
 
 const deleteDialog = ref(false)
 const deleteIndex = ref(null)
+
+/* สำคัญ */
+const originalWeekly = ref([])
 
 const form = ref({
   name: '',
@@ -229,9 +168,24 @@ async function loadCategories(){
 
 async function loadHoliday(){
   if (!props.service?.id) return
+
+  // 🔥 reset ก่อน
+  holidays.value = []
+  selectedDays.value = []
+  originalWeekly.value = []
+
   const res = await api(`/api/services/${props.service.id}/holidays`)
+
   holidays.value = (res.holidays || []).map(h => h.date)
-  selectedDays.value = (res.weekly || []).map(w => w.day_of_week)
+
+  const weekly = res.weekly || []
+
+  // ✅ กันซ้ำเฉพาะตอนโหลด
+  selectedDays.value = [...new Set(
+    weekly.map(w => w.day_of_week)
+  )]
+
+  originalWeekly.value = weekly
 }
 
 watch(() => props.service, async (s) => {
@@ -251,14 +205,11 @@ function allowedDates(val){
 
 function formatDate(d){
   const date = new Date(d)
-  const dd = String(date.getDate()).padStart(2,'0')
-  const mm = String(date.getMonth()+1).padStart(2,'0')
-  const yyyy = date.getFullYear()
-  return `${dd}-${mm}-${yyyy}`
+  return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`
 }
 
 function addHoliday(){
-  if (!calendarDate.value) return alert('เลือกวัน')
+  if (!calendarDate.value) return
   if (!holidays.value.includes(calendarDate.value)) {
     holidays.value.push(calendarDate.value)
   }
@@ -276,10 +227,11 @@ function removeHoliday(){
 
 async function save(){
   try {
-    if (!form.value.name) return alert('กรอกชื่อ')
+    if (!form.value.name) return alert('กรอกชื่อบริการ')
 
     let serviceId = form.value.id
 
+    // 1️⃣ save service
     if (serviceId) {
       await api(`/api/services/${serviceId}`, {
         method: 'PUT',
@@ -293,24 +245,20 @@ async function save(){
       serviceId = res.id
     }
 
-    for (const d of holidays.value){
-      await api(`/api/services/${serviceId}/holiday`, {
-        method: 'POST',
-        body: { date: d }
-      })
-    }
-
-    for (const d of selectedDays.value){
-      await api(`/api/services/${serviceId}/weekly-off`, {
-        method: 'POST',
-        body: { day: d }
-      })
-    }
+    // 2️⃣ 🔥 reset holiday + weekly (ตัวเดียวจบ)
+    await api(`/api/services/${serviceId}/reset-holidays`, {
+      method: 'POST',
+      body: {
+        holidays: holidays.value,
+        weekly: selectedDays.value
+      }
+    })
 
     emit('saved')
 
   } catch (e) {
-    alert('บันทึกไม่สำเร็จ')
+    console.error(e)
+    alert(e?.message || 'บันทึกไม่สำเร็จ')
   }
 }
 
@@ -322,27 +270,13 @@ onMounted(loadCategories)
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 16px;
-  background: #ffffff;
 }
 
-.left-panel {
-  background: #fafafa;
-}
+.left-panel { background: #fafafa; }
+.right-panel { background: #fff; }
 
-.right-panel {
-  background: #ffffff;
-}
-
-.section-title {
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.sub-title {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
+.section-title { font-weight: 600; margin-bottom: 10px; }
+.sub-title { font-size: 13px; color: #6b7280; }
 
 .calendar-small {
   transform: scale(0.7);
@@ -353,9 +287,5 @@ onMounted(loadCategories)
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-}
-
-.chip {
-  font-size: 12px;
 }
 </style>

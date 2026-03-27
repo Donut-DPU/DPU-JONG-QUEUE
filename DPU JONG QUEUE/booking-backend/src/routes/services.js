@@ -22,7 +22,6 @@ router.get("/", async (req, res) => {
       where.category_id = categoryId;
     }
 
-    // ✅ แก้ตรงนี้ (เพิ่ม include Category)
     const services = await Service.findAll({
       where,
       include: [
@@ -136,68 +135,46 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
 
 /**
  * =========================
- * DELETE /api/services/:id
+ * 🔥 RESET HOLIDAYS (สำคัญมาก)
  * =========================
  */
-router.delete("/:id", authRequired, adminOnly, async (req, res) => {
+router.post("/:id/reset-holidays", authRequired, adminOnly, async (req, res) => {
   try {
-    const s = await Service.findByPk(req.params.id);
-    if (!s) return res.status(404).json({ message: "Not found" });
+    const { holidays = [], weekly = [] } = req.body;
+    const serviceId = req.params.id;
 
-    await s.destroy();
-    res.json({ message: "Deleted" });
-  } catch (e) {
-    console.error("DELETE SERVICE ERROR:", e);
-    res.status(500).json({ message: e.message });
-  }
-});
-
-/**
- * =========================
- * POST /api/services/:id/holiday
- * =========================
- */
-router.post("/:id/holiday", authRequired, adminOnly, async (req, res) => {
-  try {
-    const { date } = req.body;
-
-    if (!date) {
-      return res.status(400).json({ message: "date required" });
-    }
-
-    const h = await ServiceHoliday.create({
-      service_id: req.params.id,
-      date,
+    // ✅ ลบของเก่าทั้งหมด
+    await ServiceHoliday.destroy({
+      where: { service_id: serviceId }
     });
 
-    res.json(h);
-  } catch (e) {
-    console.error("HOLIDAY ERROR:", e);
-    res.status(500).json({ message: e.message });
-  }
-});
-
-/**
- * =========================
- * POST /api/services/:id/weekly-off
- * =========================
- */
-router.post("/:id/weekly-off", authRequired, adminOnly, async (req, res) => {
-  try {
-    const { day } = req.body;
-
-    if (day === undefined) {
-      return res.status(400).json({ message: "day required (0-6)" });
-    }
-
-    const w = await ServiceWeeklyOff.create({
-      service_id: req.params.id,
-      day_of_week: day,
+    await ServiceWeeklyOff.destroy({
+      where: { service_id: serviceId }
     });
 
-    res.json(w);
+    // ✅ เพิ่มใหม่ (กันซ้ำ)
+    const uniqueHolidays = [...new Set(holidays)];
+
+    for (const d of uniqueHolidays) {
+      await ServiceHoliday.create({
+        service_id: serviceId,
+        date: d,
+      });
+    }
+
+    const uniqueWeekly = [...new Set(weekly)];
+
+    for (const d of uniqueWeekly) {
+      await ServiceWeeklyOff.create({
+        service_id: serviceId,
+        day_of_week: d,
+      });
+    }
+
+    res.json({ message: "updated" });
+
   } catch (e) {
-    console.error("WEEKLY OFF ERROR:", e);
+    console.error("RESET HOLIDAY ERROR:", e);
     res.status(500).json({ message: e.message });
   }
 });
