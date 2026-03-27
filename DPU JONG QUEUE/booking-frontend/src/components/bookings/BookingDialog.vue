@@ -25,13 +25,21 @@
 
         <div class="flex items-center gap mb-3">
           <v-btn @click="loadSlots" :loading="loading">ตรวจสอบคิวว่าง</v-btn>
-          <span v-if="!slots.length && !loading" class="text-gray-600">
-            เลือกวันที่แล้วกด “เวลาให้บริการ”
+
+          <span v-if="!slots.length && !loading && !isHoliday" class="text-gray-600">
+            เลือกวันที่แล้วกด “ตรวจสอบคิวว่าง”
           </span>
         </div>
 
-        <div v-if="slots.length">
+        <!-- ✅ แสดงวันหยุด -->
+        <div v-if="isHoliday" class="text-red mb-3">
+          {{ holidayMessage }}
+        </div>
+
+        <!-- ✅ แสดง slot -->
+        <div v-if="slots.length && !isHoliday">
           <div class="mb-2">เลือกเวลา:</div>
+
           <v-radio-group v-model="time" :mandatory="true" class="w-full">
             <div v-for="s in slotsSorted" :key="s.time" class="mb-1">
               <v-radio
@@ -55,7 +63,13 @@
 
       <v-card-actions class="justify-end">
         <v-btn variant="text" @click="$emit('close')">ปิด</v-btn>
-        <v-btn color="primary" :disabled="!time" :loading="booking" @click="book">
+
+        <v-btn
+          color="primary"
+          :disabled="!time || isHoliday"
+          :loading="booking"
+          @click="book"
+        >
           ยืนยันการจอง
         </v-btn>
       </v-card-actions>
@@ -74,7 +88,11 @@ const emit = defineEmits(['close','booked'])
 
 const visible = ref(true)
 
-// ===== เวลาไทย (Asia/Bangkok) =====
+/* ✅ state */
+const isHoliday = ref(false)
+const holidayMessage = ref("")
+
+// ===== เวลาไทย =====
 function todayBangkok() {
   const f = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Bangkok',
@@ -82,8 +100,9 @@ function todayBangkok() {
     hour: '2-digit', minute: '2-digit', hour12: false
   })
   const parts = Object.fromEntries(f.formatToParts(new Date()).map(p => [p.type, p.value]))
-  return `${parts.year}-${parts.month}-${parts.day}` // YYYY-MM-DD
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
+
 const today = todayBangkok()
 
 const date = ref(today)
@@ -94,11 +113,12 @@ const loading = ref(false)
 const booking = ref(false)
 
 watch(() => props.service, async () => {
-  // reset เมื่อเปลี่ยนบริการ แล้วโหลด slot วันนี้อัตโนมัติ
   date.value = today
   time.value = null
   note.value = ''
   slots.value = []
+  isHoliday.value = false
+  holidayMessage.value = ""
   await loadSlots()
 }, { immediate: true })
 
@@ -112,19 +132,31 @@ function remainingLabel(n) {
   return `คิวว่าง ${n}`
 }
 
+/* ✅ FIX หลักอยู่ตรงนี้ */
 async function loadSlots() {
   if (!date.value) return alert('โปรดเลือกวันที่')
   if (date.value < today) return alert('เลือกย้อนหลังไม่ได้')
 
   loading.value = true
   time.value = null
+
   try {
     const res = await api(`/api/bookings/slots?serviceId=${props.service.id}&date=${date.value}`)
-    slots.value = res.slots
-    if (!slots.value.length) {
-      // ไม่มีสล็อตในวันนั้น
-      // ไม่ alert ก็ได้ แต่ให้คงข้อความช่วยเหลือไว้
+
+    slots.value = res.slots || []
+
+    // ✅ ใช้ reason จาก backend
+    if (res.reason === "holiday") {
+      isHoliday.value = true
+      holidayMessage.value = "❌ วันนี้เป็นวันหยุดพิเศษ"
+    } else if (res.reason === "weekly_off") {
+      isHoliday.value = true
+      holidayMessage.value = "❌ วันนี้เป็นวันหยุดประจำ"
+    } else {
+      isHoliday.value = false
+      holidayMessage.value = ""
     }
+
   } catch (e) {
     if ((e.message || '').includes('401') || (e.message || '').toLowerCase().includes('unauthorized')) {
       alert('เซสชันหมดอายุ โปรดเข้าสู่ระบบใหม่')
@@ -140,6 +172,7 @@ async function loadSlots() {
 async function book() {
   if (!time.value) return alert('โปรดเลือกเวลา')
   if (date.value < today) return alert('เลือกย้อนหลังไม่ได้')
+  if (isHoliday.value) return alert('วันนี้ไม่สามารถจองได้')
 
   booking.value = true
   try {
@@ -153,12 +186,11 @@ async function book() {
       }
     })
 
-    // รีโหลด slot หลังจอง เพื่ออัปเดตจำนวนคิว (ให้เวลาเพิ่งจองแสดงว่าเต็ม/เหลือลดลงทันที)
     await loadSlots()
 
-    // ส่งข้อมูลจองกลับ และปิด dialog
     emit('booked', b)
     emit('close')
+
   } catch (e) {
     if ((e.message || '').includes('401') || (e.message || '').toLowerCase().includes('unauthorized')) {
       alert('เซสชันหมดอายุ โปรดเข้าสู่ระบบใหม่')
@@ -175,6 +207,7 @@ async function book() {
 <style scoped>
 .w-full { width: 100%; }
 .text-gray-600 { color:#6b7280; }
+.text-red { color:#dc2626; }
 .justify-end { justify-content: flex-end; display:flex; }
 .mb-1 { margin-bottom: .25rem; }
 .mb-3 { margin-bottom: .75rem; }

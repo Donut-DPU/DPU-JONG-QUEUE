@@ -45,7 +45,7 @@ router.get("/slots", authRequired, async (req, res) => {
       return res.status(404).json({ message: "Service not available" });
     }
 
-    // ✅ ===== เพิ่มตรงนี้ =====
+    // ✅ ===== เช็ควันหยุด =====
     const isHoliday = await ServiceHoliday.findOne({
       where: { service_id: serviceId, date },
     });
@@ -56,11 +56,22 @@ router.get("/slots", authRequired, async (req, res) => {
       where: { service_id: serviceId, day_of_week: day },
     });
 
-    if (isHoliday || isWeeklyOff) {
+    // ✅ แยก reason ให้ frontend ใช้
+    if (isHoliday) {
       return res.json({
         serviceId,
         date,
         slots: [],
+        reason: "holiday"
+      });
+    }
+
+    if (isWeeklyOff) {
+      return res.json({
+        serviceId,
+        date,
+        slots: [],
+        reason: "weekly_off"
       });
     }
     // ✅ ===== จบ =====
@@ -129,17 +140,23 @@ router.post("/", authRequired, async (req, res) => {
   try {
     const userId = req.user.id;
     const { serviceId, date, time, note } = req.body;
-    if (!serviceId || !date || !time) return res.status(400).json({ message: "serviceId, date, time required" });
+
+    if (!serviceId || !date || !time) {
+      return res.status(400).json({ message: "serviceId, date, time required" });
+    }
 
     const service = await Service.findByPk(serviceId);
-    if (!service || !service.active) return res.status(404).json({ message: "Service not available" });
+    if (!service || !service.active) {
+      return res.status(404).json({ message: "Service not available" });
+    }
 
-    // ✅ ✅ ✅ เพิ่มตรงนี้
+    // ✅ เช็ควันหยุด
     const isHoliday = await ServiceHoliday.findOne({
       where: { service_id: serviceId, date },
     });
 
     const day = new Date(date).getDay();
+
     const isWeeklyOff = await ServiceWeeklyOff.findOne({
       where: { service_id: serviceId, day_of_week: day },
     });
@@ -155,26 +172,53 @@ router.post("/", authRequired, async (req, res) => {
         message: "วันนี้เป็นวันหยุดประจำ",
       });
     }
-    // ✅ ✅ ✅ จบส่วนที่เพิ่ม
 
     const { date: today, time: nowHHMM } = nowBangkok();
-    if (date < today) return res.status(400).json({ message: "Cannot book in the past date" });
+
+    if (date < today) {
+      return res.status(400).json({ message: "Cannot book in the past date" });
+    }
+
     if (date === today && toMinutes(time) <= toMinutes(nowHHMM)) {
       return res.status(400).json({ message: "Cannot book a past time today" });
     }
 
-    const slots = generateSlots(service.dailyStartTime, service.dailyEndTime, service.slotDurationMin);
-    if (!slots.includes(time)) return res.status(400).json({ message: "Invalid time slot" });
+    const slots = generateSlots(
+      service.dailyStartTime,
+      service.dailyEndTime,
+      service.slotDurationMin
+    );
+
+    if (!slots.includes(time)) {
+      return res.status(400).json({ message: "Invalid time slot" });
+    }
 
     const existsMine = await Booking.findOne({
-      where: { user_id: userId, service_id: serviceId, date, time, status: { [Op.in]: ACTIVE_STATUSES } },
+      where: {
+        user_id: userId,
+        service_id: serviceId,
+        date,
+        time,
+        status: { [Op.in]: ACTIVE_STATUSES }
+      },
     });
-    if (existsMine) return res.status(409).json({ message: "You already booked this slot" });
+
+    if (existsMine) {
+      return res.status(409).json({ message: "You already booked this slot" });
+    }
 
     const bookedCount = await Booking.count({
-      where: { service_id: serviceId, date, time, status: { [Op.in]: ACTIVE_STATUSES } },
+      where: {
+        service_id: serviceId,
+        date,
+        time,
+        status: { [Op.in]: ACTIVE_STATUSES }
+      },
     });
-    if (bookedCount >= service.slotCapacity) return res.status(409).json({ message: "Slot is full" });
+
+    if (bookedCount >= service.slotCapacity) {
+      return res.status(409).json({ message: "Slot is full" });
+    }
 
     const b = await Booking.create({
       user_id: userId,
@@ -186,6 +230,7 @@ router.post("/", authRequired, async (req, res) => {
     });
 
     res.status(201).json(b);
+
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: e.message });
@@ -207,8 +252,10 @@ router.get("/mine", authRequired, async (req, res) => {
 
 router.patch("/:id/status", authRequired, adminOnly, async (req, res) => {
   const { status } = req.body;
-  if (!["pending","confirmed","checked_in","completed","cancelled","no_show"].includes(status))
+
+  if (!["pending","confirmed","checked_in","completed","cancelled","no_show"].includes(status)) {
     return res.status(400).json({ message: "Invalid status" });
+  }
 
   const b = await Booking.findByPk(req.params.id);
   if (!b) return res.status(404).json({ message: "Not found" });
@@ -220,6 +267,7 @@ router.patch("/:id/status", authRequired, adminOnly, async (req, res) => {
 
 router.get("/admin", authRequired, adminOnly, async (req, res) => {
   const { date, serviceId, status } = req.query;
+
   const where = {};
   if (date) where.date = date;
   if (serviceId) where.service_id = serviceId;
