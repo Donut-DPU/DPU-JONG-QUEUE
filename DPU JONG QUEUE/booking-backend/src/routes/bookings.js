@@ -6,6 +6,8 @@ import Booking from "../models/Booking.js";
 import { generateSlots, toMinutes } from "../utils/time.js";
 import { Op } from "sequelize";
 import User from "../models/User.js";
+import ServiceHoliday from "../models/ServiceHoliday.js";
+import ServiceWeeklyOff from "../models/ServiceWeeklyOff.js";
 
 
 const router = Router();
