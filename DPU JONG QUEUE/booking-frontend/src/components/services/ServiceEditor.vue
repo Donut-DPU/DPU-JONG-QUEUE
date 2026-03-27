@@ -7,13 +7,13 @@
 
       <v-card-text>
 
-        <!-- ✅ ชื่อ -->
+        <!-- ชื่อ -->
         <v-text-field
           v-model="form.name"
           label="ชื่อบริการ"
         />
 
-        <!-- ✅ หมวดหมู่ (เพิ่มใหม่) -->
+        <!-- หมวด -->
         <v-select
           v-model="form.categoryId"
           :items="categories"
@@ -60,6 +60,28 @@
           label="เปิดใช้งาน"
         />
 
+        <!-- ===== วันหยุดรายวัน ===== -->
+        <v-text-field
+          v-model="holidayDate"
+          label="เพิ่มวันหยุด (YYYY-MM-DD)"
+        />
+        <v-btn class="mb-3" @click="addHoliday">
+          เพิ่มวันหยุด
+        </v-btn>
+
+        <!-- ===== วันหยุดประจำ ===== -->
+        <v-select
+          v-model="selectedDay"
+          :items="days"
+          item-title="title"
+          item-value="value"
+          label="วันหยุดประจำ"
+        />
+
+        <v-btn @click="addWeeklyOff">
+          เพิ่มวันหยุดประจำ
+        </v-btn>
+
       </v-card-text>
 
       <v-card-actions class="justify-end">
@@ -85,10 +107,10 @@ const emit = defineEmits(['close','saved'])
 
 const visible = ref(true)
 
-/* ✅ หมวด */
+/* ===== หมวด ===== */
 const categories = ref([])
 
-/* ✅ form */
+/* ===== form ===== */
 const form = ref({
   name: '',
   categoryId: null,
@@ -99,6 +121,24 @@ const form = ref({
   description: "",
   active: true
 })
+
+/* ===== เพิ่มใหม่ตรงนี้ ===== */
+
+// วันหยุดรายวัน
+const holidayDate = ref('')
+
+// วันหยุดประจำ
+const selectedDay = ref(null)
+
+const days = [
+  { title: "อาทิตย์", value: 0 },
+  { title: "จันทร์", value: 1 },
+  { title: "อังคาร", value: 2 },
+  { title: "พุธ", value: 3 },
+  { title: "พฤหัส", value: 4 },
+  { title: "ศุกร์", value: 5 },
+  { title: "เสาร์", value: 6 },
+]
 
 /* ---------- โหลดหมวด ---------- */
 async function loadCategories(){
@@ -143,6 +183,44 @@ async function save(){
 
   } catch (e) {
     alert(e.message || 'บันทึกไม่สำเร็จ')
+  }
+}
+
+/* ---------- วันหยุด ---------- */
+async function addHoliday() {
+  try {
+    if (!props.service?.id) return alert('กรุณาบันทึกบริการก่อน')
+    if (!holidayDate.value) return alert('กรุณาเลือกวันที่')
+
+    await api(`/api/services/${props.service.id}/holiday`, {
+      method: "POST",
+      body: { date: holidayDate.value },
+    })
+
+    holidayDate.value = ''
+    alert('เพิ่มวันหยุดสำเร็จ')
+
+  } catch (e) {
+    alert('เพิ่มวันหยุดไม่สำเร็จ')
+  }
+}
+
+/* ---------- วันหยุดประจำ ---------- */
+async function addWeeklyOff() {
+  try {
+    if (!props.service?.id) return alert('กรุณาบันทึกบริการก่อน')
+    if (selectedDay.value === null) return alert('กรุณาเลือกวัน')
+
+    await api(`/api/services/${props.service.id}/weekly-off`, {
+      method: "POST",
+      body: { day: selectedDay.value },
+    })
+
+    selectedDay.value = null
+    alert('เพิ่มวันหยุดประจำสำเร็จ')
+
+  } catch (e) {
+    alert('เพิ่มวันหยุดประจำไม่สำเร็จ')
   }
 }
 
