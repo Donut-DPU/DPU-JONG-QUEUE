@@ -35,13 +35,30 @@
         lg="4"
       >
         <v-card class="service-card">
-          <v-card-title>{{ s.name }}</v-card-title>
+
+          <!-- 🖼 รูป -->
+          <v-img
+            v-if="s.image_url"
+            :src="s.image_url"
+            height="180"
+            cover
+          />
+          <v-img
+            v-else
+            src="https://via.placeholder.com/400x200?text=No+Image"
+            height="180"
+            cover
+          />
+
+          <v-card-title class="title-text">
+            {{ s.name }}
+          </v-card-title>
 
           <v-card-subtitle>
             {{ s.dailyStartTime }} - {{ s.dailyEndTime }}
           </v-card-subtitle>
 
-          <v-card-text>
+          <v-card-text class="description-text">
             {{ s.description || "ไม่มีรายละเอียด" }}
           </v-card-text>
 
@@ -50,6 +67,7 @@
               จอง
             </v-btn>
           </v-card-actions>
+
         </v-card>
       </v-col>
     </v-row>
@@ -91,7 +109,7 @@ async function loadCategories() {
   }
 }
 
-/* ---------- LOAD SERVICE (สำคัญสุด) ---------- */
+/* ---------- LOAD SERVICE ---------- */
 async function loadServices() {
   try {
     let url = "/api/services";
@@ -142,6 +160,26 @@ onMounted(async () => {
 .service-card {
   border-radius: 12px;
   border: 1px solid #e5e7eb;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ชื่อ service ตัด ... */
+.title-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* description ให้สูงเท่ากัน */
+.description-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 60px;
 }
 
 .text-gray-600 {

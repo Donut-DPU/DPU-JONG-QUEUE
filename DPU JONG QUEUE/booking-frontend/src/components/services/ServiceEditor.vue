@@ -67,6 +67,27 @@
             <div class="panel right-panel">
 
               <div class="section-title">ข้อมูลบริการ</div>
+              
+              <!-- 🔥 Upload Image -->
+           <v-col cols="20" md="20" position="center">    
+              <v-file-input
+                label="รูปบริการ"
+                accept="image/*"
+                @update:modelValue="uploadImage"
+                :loading="uploading"
+                class="mt-3 rounded-lg"
+              />
+
+              <div class="image-preview">
+              <v-img
+                v-if="form.image_url"
+                :src="form.image_url"
+                contain
+                max-height="80%"
+                max-width="80%"
+              />
+            </div>
+            </v-col>
 
               <v-text-field v-model="form.name" label="ชื่อบริการ"/>
               <v-select v-model="form.categoryId" :items="categories" item-title="name" item-value="id" label="หมวดหมู่"/>
@@ -102,7 +123,7 @@
 
       <v-card-actions class="justify-end">
         <v-btn text @click="$emit('close')">ยกเลิก</v-btn>
-        <v-btn color="primary" @click="save">บันทึก</v-btn>
+        <v-btn color="primary" :disabled="uploading" @click="save">บันทึก</v-btn>
       </v-card-actions>
 
     </v-card>
@@ -138,6 +159,8 @@ const calendarDate = ref(null)
 const deleteDialog = ref(false)
 const deleteIndex = ref(null)
 
+const uploading = ref(false)
+
 /* สำคัญ */
 const originalWeekly = ref([])
 
@@ -149,7 +172,8 @@ const form = ref({
   slotCapacity: 1,
   slotDurationMin: 60,
   description: '',
-  active: true
+  active: true,
+  image_url: ''
 })
 
 const days = [
@@ -169,7 +193,6 @@ async function loadCategories(){
 async function loadHoliday(){
   if (!props.service?.id) return
 
-  // 🔥 reset ก่อน
   holidays.value = []
   selectedDays.value = []
   originalWeekly.value = []
@@ -180,7 +203,6 @@ async function loadHoliday(){
 
   const weekly = res.weekly || []
 
-  // ✅ กันซ้ำเฉพาะตอนโหลด
   selectedDays.value = [...new Set(
     weekly.map(w => w.day_of_week)
   )]
@@ -192,7 +214,8 @@ watch(() => props.service, async (s) => {
   if (s) {
     form.value = {
       ...s,
-      categoryId: s.category_id || s.categoryId
+      categoryId: s.category_id || s.categoryId,
+      image_url: s.image_url || ''
     }
     await loadHoliday()
   }
@@ -225,13 +248,48 @@ function removeHoliday(){
   deleteDialog.value = false
 }
 
+/* 🔥 Upload Image (แก้สมบูรณ์) */
+async function uploadImage(files){
+  try {
+    const file = Array.isArray(files) ? files[0] : files
+    if (!file) return
+
+    uploading.value = true
+
+    const formData = new FormData()
+    formData.append("image", file)
+
+    const res = await fetch("http://localhost:5000/api/upload", {
+      method: "POST",
+      body: formData
+    })
+
+    const data = await res.json()
+
+    if (!data.url) {
+      throw new Error("Upload failed")
+    }
+
+    form.value.image_url = data.url
+
+    console.log("UPLOAD SUCCESS:", data.url)
+
+  } catch (err) {
+    console.error(err)
+    alert("อัปโหลดรูปไม่สำเร็จ")
+  } finally {
+    uploading.value = false
+  }
+}
+
 async function save(){
   try {
     if (!form.value.name) return alert('กรอกชื่อบริการ')
 
+    console.log("SAVE DATA:", form.value)
+
     let serviceId = form.value.id
 
-    // 1️⃣ save service
     if (serviceId) {
       await api(`/api/services/${serviceId}`, {
         method: 'PUT',
@@ -245,7 +303,6 @@ async function save(){
       serviceId = res.id
     }
 
-    // 2️⃣ 🔥 reset holiday + weekly (ตัวเดียวจบ)
     await api(`/api/services/${serviceId}/reset-holidays`, {
       method: 'POST',
       body: {
@@ -287,5 +344,22 @@ onMounted(loadCategories)
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.image-box {
+  border: 2px solid #e5e7eb; /* สีเทาอ่อน */
+  border-radius: 12px;       /* มุมโค้ง */
+  background-color: #f9fafb; /* พื้นหลัง (กันโล่ง) */
+}
+
+.image-preview {
+  height: 250px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background-color: #f9fafb;
+
+  display: flex;
+  justify-content: center; /* กึ่งกลางแนวนอน */
+  align-items: center;     /* กึ่งกลางแนวตั้ง */
 }
 </style>

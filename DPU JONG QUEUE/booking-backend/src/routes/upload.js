@@ -1,22 +1,27 @@
-const express = require('express');
-const multer = require('multer');
-const cloudinary = require('../config/cloudinary');
+import express from "express";
+import multer from "multer";
+import cloudinary from "../config/cloudinary.js";
+import fs from "fs";
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ dest: "uploads/" });
 
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post("/", upload.single("image"), async (req, res) => {
   try {
-    cloudinary.uploader.upload_stream(
-      { folder: 'services' },
-      (error, result) => {
-        if (error) return res.status(500).json(error);
-        res.json({ url: result.secure_url });
-      }
-    ).end(req.file.buffer);
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const result = await cloudinary.uploader.upload(req.file.path);
+
+    // ลบไฟล์ temp
+    fs.unlinkSync(req.file.path);
+
+    res.json({ url: result.secure_url });
   } catch (err) {
-    res.status(500).send('Upload error');
+    console.error(err);
+    res.status(500).json({ message: "Upload failed" });
   }
 });
 
-module.exports = router;
+export default router;

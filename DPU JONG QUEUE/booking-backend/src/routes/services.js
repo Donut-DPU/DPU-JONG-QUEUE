@@ -75,6 +75,7 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
       dailyEndTime,
       slotDurationMin,
       slotCapacity,
+      image_url,   // 🔥 เพิ่ม
     } = req.body;
 
     const s = await Service.create({
@@ -85,6 +86,7 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
       dailyEndTime,
       slotDurationMin,
       slotCapacity,
+      image_url,   // 🔥 เพิ่ม
     });
 
     res.json(s);
@@ -113,6 +115,7 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
       slotDurationMin,
       slotCapacity,
       active,
+      image_url,   // 🔥 เพิ่ม
     } = req.body;
 
     await s.update({
@@ -124,6 +127,7 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
       slotDurationMin,
       slotCapacity,
       active,
+      image_url,   // 🔥 เพิ่ม
     });
 
     res.json(s);
@@ -135,7 +139,7 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
 
 /**
  * =========================
- * 🔥 RESET HOLIDAYS (สำคัญมาก)
+ * RESET HOLIDAYS
  * =========================
  */
 router.post("/:id/reset-holidays", authRequired, adminOnly, async (req, res) => {
@@ -143,7 +147,6 @@ router.post("/:id/reset-holidays", authRequired, adminOnly, async (req, res) => 
     const { holidays = [], weekly = [] } = req.body;
     const serviceId = req.params.id;
 
-    // ✅ ลบของเก่าทั้งหมด
     await ServiceHoliday.destroy({
       where: { service_id: serviceId }
     });
@@ -152,9 +155,7 @@ router.post("/:id/reset-holidays", authRequired, adminOnly, async (req, res) => 
       where: { service_id: serviceId }
     });
 
-    // ✅ เพิ่มใหม่ (กันซ้ำ)
     const uniqueHolidays = [...new Set(holidays)];
-
     for (const d of uniqueHolidays) {
       await ServiceHoliday.create({
         service_id: serviceId,
@@ -163,7 +164,6 @@ router.post("/:id/reset-holidays", authRequired, adminOnly, async (req, res) => 
     }
 
     const uniqueWeekly = [...new Set(weekly)];
-
     for (const d of uniqueWeekly) {
       await ServiceWeeklyOff.create({
         service_id: serviceId,

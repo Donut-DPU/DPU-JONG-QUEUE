@@ -38,6 +38,10 @@ Service.init(
       type: DataTypes.INTEGER,
       defaultValue: 1,
     },
+
+    image_url: {
+      type: DataTypes.TEXT,
+    },
   },
   {
     sequelize,
@@ -47,7 +51,7 @@ Service.init(
   }
 );
 
-// ✅ relation
+// relation
 Category.hasMany(Service, { foreignKey: "category_id" });
 Service.belongsTo(Category, { foreignKey: "category_id" });
 
