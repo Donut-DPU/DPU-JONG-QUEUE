@@ -2,7 +2,7 @@
   <div>
     <h2 class="text-2xl font-bold mb-4">เลือกบริการ</h2>
 
-    <!-- 🔵 หมวด -->
+    <!-- หมวด -->
     <div class="mb-4">
       <div class="font-bold mb-2">หมวดหมู่</div>
 
@@ -20,12 +20,12 @@
       </v-chip-group>
     </div>
 
-    <!-- 🟣 ชื่อหมวด -->
+    <!-- ชื่อหมวด -->
     <div class="mb-3 text-gray-600">
       หมวด: {{ currentCategoryName }}
     </div>
 
-    <!-- 🟢 services -->
+    <!-- services -->
     <v-row v-if="services.length">
       <v-col
         v-for="s in services"
@@ -36,7 +36,7 @@
       >
         <v-card class="service-card">
 
-          <!-- 🖼 รูป -->
+          <!-- รูปเต็มขอบ -->
           <v-img
             v-if="s.image_url"
             :src="s.image_url"
@@ -45,25 +45,29 @@
           />
           <v-img
             v-else
-            src="https://via.placeholder.com/400x200?text=No+Image"
+            src="https://via.placeholder.com/400x300"
             height="180"
             cover
           />
 
+          <!-- ชื่อ -->
           <v-card-title class="title-text">
             {{ s.name }}
           </v-card-title>
 
+          <!-- เวลา -->
           <v-card-subtitle>
             {{ s.dailyStartTime }} - {{ s.dailyEndTime }}
           </v-card-subtitle>
 
+          <!-- รายละเอียด -->
           <v-card-text class="description-text">
             {{ s.description || "ไม่มีรายละเอียด" }}
           </v-card-text>
 
-          <v-card-actions>
-            <v-btn color="primary" @click="openBooking(s)">
+          <!-- ปุ่ม -->
+          <v-card-actions class="mt-auto">
+            <v-btn color="primary" block @click="openBooking(s)">
               จอง
             </v-btn>
           </v-card-actions>
@@ -72,12 +76,12 @@
       </v-col>
     </v-row>
 
-    <!-- 🔴 ไม่มีบริการ -->
+    <!-- ไม่มีบริการ -->
     <v-alert v-else type="info" variant="tonal">
       ไม่มีบริการในหมวดหมู่นี้
     </v-alert>
 
-    <!-- 🔵 Dialog -->
+    <!-- Dialog -->
     <BookingDialog
       v-if="selectedService"
       :service="selectedService"
@@ -92,52 +96,32 @@ import { ref, watch, onMounted, computed } from "vue";
 import { api } from "@/api/http";
 import BookingDialog from "@/components/bookings/BookingDialog.vue";
 
-/* ---------- STATE ---------- */
 const categories = ref([]);
 const services = ref([]);
 
 const selectedCategory = ref("all");
 const selectedService = ref(null);
 
-/* ---------- LOAD CATEGORY ---------- */
 async function loadCategories() {
-  try {
-    categories.value = await api("/api/categories");
-  } catch (e) {
-    console.error(e);
-    alert("โหลดหมวดไม่สำเร็จ");
-  }
+  categories.value = await api("/api/categories");
 }
 
-/* ---------- LOAD SERVICE ---------- */
 async function loadServices() {
-  try {
-    let url = "/api/services";
-
-    if (selectedCategory.value !== "all") {
-      url += `?categoryId=${selectedCategory.value}`;
-    }
-
-    const res = await api(url);
-    services.value = res;
-  } catch (e) {
-    console.error(e);
-    alert("โหลดบริการไม่สำเร็จ");
+  let url = "/api/services";
+  if (selectedCategory.value !== "all") {
+    url += `?categoryId=${selectedCategory.value}`;
   }
+  services.value = await api(url);
 }
 
-/* ---------- COMPUTED ---------- */
 const currentCategoryName = computed(() => {
   if (selectedCategory.value === "all") return "ทั้งหมด";
-
   const c = categories.value.find(
     (c) => c.id === selectedCategory.value
   );
-
   return c ? c.name : "-";
 });
 
-/* ---------- ACTION ---------- */
 function openBooking(service) {
   selectedService.value = service;
 }
@@ -146,10 +130,8 @@ function reload() {
   loadServices();
 }
 
-/* ---------- WATCH ---------- */
 watch(selectedCategory, loadServices);
 
-/* ---------- START ---------- */
 onMounted(async () => {
   await loadCategories();
   await loadServices();
@@ -158,14 +140,20 @@ onMounted(async () => {
 
 <style scoped>
 .service-card {
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
   height: 100%;
   display: flex;
   flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  transition: 0.2s;
 }
 
-/* ชื่อ service ตัด ... */
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
 .title-text {
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -173,7 +161,6 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-/* description ให้สูงเท่ากัน */
 .description-text {
   display: -webkit-box;
   -webkit-line-clamp: 3;

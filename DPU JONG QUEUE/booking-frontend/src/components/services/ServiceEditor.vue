@@ -69,7 +69,7 @@
               <div class="section-title">ข้อมูลบริการ</div>
               
               <!-- 🔥 Upload Image -->
-           <v-col cols="20" md="20" position="center">    
+           <v-col position="center">    
               <v-file-input
                 label="รูปบริการ"
                 accept="image/*"
@@ -77,7 +77,7 @@
                 :loading="uploading"
                 class="mt-3 rounded-lg"
               />
-
+            <div class="section-title">รูป preview</div>
               <div class="image-preview">
               <v-img
                 v-if="form.image_url"
@@ -86,7 +86,13 @@
                 max-height="80%"
                 max-width="80%"
               />
+            
             </div>
+
+            <div class="warning-text">
+              แนะนำ 800x600 ขนาดไม่เกิน 200KB
+            </div>
+
             </v-col>
 
               <v-text-field v-model="form.name" label="ชื่อบริการ"/>
@@ -361,5 +367,11 @@ onMounted(loadCategories)
   display: flex;
   justify-content: center; /* กึ่งกลางแนวนอน */
   align-items: center;     /* กึ่งกลางแนวตั้ง */
+}
+
+.warning-text {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 600;
 }
 </style>
