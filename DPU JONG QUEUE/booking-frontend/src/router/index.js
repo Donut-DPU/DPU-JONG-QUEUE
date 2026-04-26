@@ -16,6 +16,7 @@ import AdminServicesPage from '@/pages/admin/AdminServicesPage.vue'
 import AdminBookingsPage from '@/pages/admin/AdminBookingsPage.vue'
 import AdminSchedulePage from '@/pages/admin/AdminSchedulePage.vue'
 import AdminWeekViewPage from '@/pages/admin/AdminWeekViewPage.vue'
+import CreateAdmin from '@/pages/admin/CreateAdmin.vue'
 
 const routes = [
   { path: '/login', component: LoginPage },
@@ -49,7 +50,8 @@ const routes = [
       { path: 'services', component: AdminServicesPage },
       { path: 'bookings', component: AdminBookingsPage },
       { path: 'schedule', component: AdminSchedulePage },
-      { path: 'schedule-week', component: AdminWeekViewPage }
+      { path: 'schedule-week', component: AdminWeekViewPage },
+      { path: 'create-admin', component: CreateAdmin }
     ]
   },
 

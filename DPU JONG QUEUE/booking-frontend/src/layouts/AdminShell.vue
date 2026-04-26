@@ -79,6 +79,8 @@ const menus = [
 
   // ✅ ตารางคิวแบบรายสัปดาห์
   { icon: 'mdi-calendar-week', label: 'ตารางคิวรายสัปดาห์', to: '/admin/schedule-week' },
+
+  
 ]
 
 
@@ -88,6 +90,8 @@ const items = [
   { title: 'การจอง', to: '/admin/bookings', icon: 'mdi-calendar-check' },
   { title: 'ตารางคิวนัดหมาย', icon: 'mdi-table', label: 'ตารางคิว (รายการ)', to: '/admin/schedule' },
   { title: 'ตรวจสอบคิวว่าง',icon: 'mdi-calendar-week', label: 'ตารางคิวรายสัปดาห์', to: '/admin/schedule-week' },
+  // ✅ เพิ่ม Admin
+  { title: 'เพิ่ม Admin', to: '/admin/create-admin', icon: 'mdi-account-plus' },
 
 ]
 
