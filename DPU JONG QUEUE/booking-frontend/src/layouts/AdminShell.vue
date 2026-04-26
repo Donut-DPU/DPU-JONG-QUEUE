@@ -91,7 +91,7 @@ const items = [
   { title: 'ตารางคิวนัดหมาย', icon: 'mdi-table', label: 'ตารางคิว (รายการ)', to: '/admin/schedule' },
   { title: 'ตรวจสอบคิวว่าง',icon: 'mdi-calendar-week', label: 'ตารางคิวรายสัปดาห์', to: '/admin/schedule-week' },
   // ✅ เพิ่ม Admin
-  { title: 'เพิ่ม Admin', to: '/admin/create-admin', icon: 'mdi-account-plus' },
+  // { title: 'เพิ่ม Admin', to: '/admin/create-admin', icon: 'mdi-account-plus' },
   { title: 'จัดการ Admin', to: '/admin/admins', icon: 'mdi-account-cog' },
 
 ]

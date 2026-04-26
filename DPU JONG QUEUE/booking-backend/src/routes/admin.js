@@ -82,4 +82,70 @@ router.get("/users", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+// PUT /api/admin/users/:id
+router.put("/users/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, firstName, lastName } = req.body;
+
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // ✅ กัน email ซ้ำ
+    const existing = await User.findOne({ where: { email } });
+    if (existing && existing.id !== user.id) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
+    user.email = email;
+    user.fullName = `${firstName} ${lastName}`;
+
+    await user.save();
+
+    res.json({ message: "Updated successfully", user });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// PUT /api/admin/users/:id/reset-password
+router.put("/users/:id/reset-password", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = hashedPassword;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// DELETE /api/admin/users/:id
+router.delete("/users/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    await user.destroy();
+
+    res.json({ message: "Deleted successfully" });
+
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
 export default router;
