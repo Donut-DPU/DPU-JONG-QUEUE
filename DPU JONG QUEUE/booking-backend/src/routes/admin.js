@@ -149,3 +149,151 @@ router.delete("/users/:id", authRequired, adminOnly, async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
+
+
+// import { Router } from "express";
+// import { authRequired, adminOnly, superAdminOnly } from "../middleware/auth.js";
+// import User from "../models/User.js";
+// import bcrypt from "bcrypt";
+
+// const router = Router();
+
+
+// // ================= CREATE ADMIN =================
+// router.post("/users/create-admin", authRequired, superAdminOnly, async (req, res) => {
+//   try {
+//     const { email, password, firstName, lastName } = req.body;
+
+//     if (!email || !password || !firstName || !lastName) {
+//       return res.status(400).json({ message: "Missing required fields" });
+//     }
+
+//     const existingUser = await User.findOne({ where: { email } });
+//     if (existingUser) {
+//       return res.status(400).json({ message: "Email already in use" });
+//     }
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     const newAdmin = await User.create({
+//       email,
+//       passwordHash: hashedPassword,
+//       fullName: `${firstName} ${lastName}`,
+//       role: "admin"
+//     });
+
+//     res.json({ message: "Admin created successfully", user: newAdmin });
+
+//   } catch (e) {
+//     console.error("🔥 CREATE ADMIN ERROR:", e);
+//     res.status(500).json({ message: e.message });
+//   }
+// });
+
+
+// // ================= GET ADMIN =================
+// router.get("/users", authRequired, adminOnly, async (req, res) => {
+//   try {
+//     const users = await User.findAll({
+//       where: { role: "admin" }
+//     });
+
+//     const result = users.map(u => {
+//       const [firstName, ...rest] = (u.fullName || "").split(" ");
+//       return {
+//         ...u.toJSON(),
+//         firstName,
+//         lastName: rest.join(" ")
+//       };
+//     });
+
+//     res.json(result);
+
+//   } catch (e) {
+//     res.status(500).json({ message: e.message });
+//   }
+// });
+
+
+// // ================= UPDATE =================
+// router.put("/users/:id", authRequired, adminOnly, async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { email, firstName, lastName } = req.body;
+
+//     const user = await User.findByPk(id);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     // ❗ admin แก้ได้เฉพาะตัวเอง
+//     if (req.user.role !== 'superadmin' && req.user.id !== user.id) {
+//       return res.status(403).json({ message: "ไม่มีสิทธิ์แก้ไข" });
+//     }
+
+//     const existing = await User.findOne({ where: { email } });
+//     if (existing && existing.id !== user.id) {
+//       return res.status(400).json({ message: "Email already in use" });
+//     }
+
+//     user.email = email;
+//     user.fullName = `${firstName} ${lastName}`;
+//     await user.save();
+
+//     res.json({ message: "Updated successfully", user });
+
+//   } catch (e) {
+//     res.status(500).json({ message: e.message });
+//   }
+// });
+
+
+// // ================= RESET PASSWORD =================
+// router.put("/users/:id/reset-password", authRequired, adminOnly, async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { newPassword } = req.body;
+
+//     const user = await User.findByPk(id);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     // ❗ เฉพาะ superadmin หรือเจ้าของ account
+//     if (req.user.role !== 'superadmin' && req.user.id !== user.id) {
+//       return res.status(403).json({ message: "ไม่มีสิทธิ์รีเซ็ต" });
+//     }
+
+//     const hashedPassword = await bcrypt.hash(newPassword, 10);
+//     user.passwordHash = hashedPassword;
+
+//     await user.save();
+
+//     res.json({ message: "Password reset successful" });
+
+//   } catch (e) {
+//     res.status(500).json({ message: e.message });
+//   }
+// });
+
+
+// // ================= DELETE =================
+// router.delete("/users/:id", authRequired, superAdminOnly, async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const user = await User.findByPk(id);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     await user.destroy();
+
+//     res.json({ message: "Deleted successfully" });
+
+//   } catch (e) {
+//     res.status(500).json({ message: e.message });
+//   }
+// });
+
+// export default router;

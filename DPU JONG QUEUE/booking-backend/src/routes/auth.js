@@ -42,4 +42,11 @@ router.post("/login", async (req, res) => {
   }
 });
 
+export const superAdminOnly = (req, res, next) => {
+  if (!req.user || req.user.role !== 'superadmin') {
+    return res.status(403).json({ message: "SuperAdmin only" });
+  }
+  next();
+};
+
 export default router;
