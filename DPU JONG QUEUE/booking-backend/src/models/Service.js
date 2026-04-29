@@ -23,6 +23,7 @@ Service.init(
       allowNull: false,
       defaultValue: "09:00",
     },
+
     dailyEndTime: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -41,6 +42,19 @@ Service.init(
 
     image_url: {
       type: DataTypes.TEXT,
+    },
+
+    // 🔥 ✅ เพิ่มตรงนี้ (สำคัญมาก)
+    autoCancelEnabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: "auto_cancel_enabled",
+    },
+
+    autoCancelMinutes: {
+      type: DataTypes.INTEGER,
+      defaultValue: 10,
+      field: "auto_cancel_minutes",
     },
   },
   {

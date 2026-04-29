@@ -39,6 +39,7 @@
               <th>เวลา</th>
               <th>สล็อต</th>
               <th>นาที</th>
+              <th>Auto Cancel</th>
               <th>สถานะ</th>
               <th></th>
             </tr>
@@ -52,22 +53,71 @@
               <td>{{ s.slotCapacity }}</td>
               <td>{{ s.slotDurationMin }}</td>
 
+              <!-- AUTO CANCEL -->
+              <td>
+                <v-chip
+                  v-if="s.autoCancelEnabled"
+                  size="small"
+                  color="orange"
+                >
+                  เปิด ({{ s.autoCancelMinutes }} นาที)
+                </v-chip>
+
+                <v-chip
+                  v-else
+                  size="small"
+                  color="grey"
+                  variant="outlined"
+                >
+                  ปิด
+                </v-chip>
+              </td>
+
+              <!-- STATUS -->
               <td>
                 <v-chip size="small" :color="s.active ? 'success' : 'grey'">
                   {{ s.active ? 'เปิด' : 'ปิด' }}
                 </v-chip>
               </td>
 
+              <!-- ACTION BUTTONS -->
               <td>
-                <v-btn size="small" @click="openEdit(s)">แก้ไข</v-btn>
-                <v-btn size="small" color="error" @click="openDeleteService(s)">
-                  ลบ
-                </v-btn>
+                <div class="action-wrap">
+
+                  <!-- EDIT -->
+                  <v-tooltip text="แก้ไข" location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon
+                        class="action-btn edit"
+                        @click="openEdit(s)"
+                      >
+                        <v-icon>mdi-pencil</v-icon>
+                      </v-btn>
+                    </template>
+                  </v-tooltip>
+
+                  <!-- DELETE -->
+                  <v-tooltip text="ลบ" location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon
+                        class="action-btn delete"
+                        @click="openDeleteService(s)"
+                      >
+                        <v-icon>mdi-delete</v-icon>
+                      </v-btn>
+                    </template>
+                  </v-tooltip>
+
+                </div>
               </td>
             </tr>
 
             <tr v-if="!services.length">
-              <td colspan="7" class="text-center text-muted">
+              <td colspan="8" class="text-center text-muted">
                 ยังไม่มีบริการ
               </td>
             </tr>
@@ -92,88 +142,16 @@
       @saved="onSaved"
     />
 
-    <!-- CATEGORY MANAGER -->
-    <v-dialog v-model="categoryDialog" max-width="500">
+    <!-- DELETE CONFIRM -->
+    <v-dialog v-model="deleteDialog" max-width="400">
       <v-card>
-        <v-card-title>จัดการหมวดหมู่</v-card-title>
-
+        <v-card-title>ยืนยันลบ</v-card-title>
         <v-card-text>
-
-          <!-- ADD -->
-          <div class="flex gap mb-3">
-            <v-text-field v-model="categoryName" label="ชื่อหมวดใหม่"/>
-            <v-btn color="primary" @click="createCategory">เพิ่ม</v-btn>
-          </div>
-
-          <!-- LIST -->
-          <div v-for="c in categories" :key="c.id" class="category-item">
-            <span>{{ c.name }}</span>
-
-            <div class="flex gap">
-              <v-tooltip text="แก้ไข">
-                <template #activator="{ props }">
-                  <v-btn v-bind="props" size="x-small" icon @click="openEditDialog(c)">
-                    ✏️
-                  </v-btn>
-                </template>
-              </v-tooltip>
-
-              <v-tooltip text="ลบ">
-                <template #activator="{ props }">
-                  <v-btn v-bind="props" size="x-small" icon color="error" @click="openDeleteCategory(c)">
-                    🗑️
-                  </v-btn>
-                </template>
-              </v-tooltip>
-            </div>
-          </div>
-
-        </v-card-text>
-
-        <v-card-actions class="justify-end">
-          <v-btn text @click="categoryDialog=false">ปิด</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- EDIT CATEGORY -->
-    <v-dialog v-model="editDialog" max-width="400">
-      <v-card>
-        <v-card-title>แก้ไขหมวด</v-card-title>
-        <v-card-text>
-          <v-text-field v-model="editName"/>
+          ลบ "{{ deleteItem?.name }}" ?
         </v-card-text>
         <v-card-actions class="justify-end">
-          <v-btn text @click="editDialog=false">ยกเลิก</v-btn>
-          <v-btn color="primary" @click="saveEdit">บันทึก</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- DELETE SERVICE -->
-    <v-dialog v-model="deleteServiceDialog" max-width="400">
-      <v-card>
-        <v-card-title>ยืนยันลบบริการ</v-card-title>
-        <v-card-text>
-          ลบ "{{ deleteServiceItem?.name }}" ?
-        </v-card-text>
-        <v-card-actions class="justify-end">
-          <v-btn text @click="deleteServiceDialog=false">ยกเลิก</v-btn>
-          <v-btn color="error" @click="confirmDeleteService">ลบ</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- DELETE CATEGORY -->
-    <v-dialog v-model="deleteCategoryDialog" max-width="400">
-      <v-card>
-        <v-card-title>ยืนยันลบหมวด</v-card-title>
-        <v-card-text>
-          ลบ "{{ deleteCategoryItem?.name }}" ?
-        </v-card-text>
-        <v-card-actions class="justify-end">
-          <v-btn text @click="deleteCategoryDialog=false">ยกเลิก</v-btn>
-          <v-btn color="error" @click="confirmDeleteCategory">ลบ</v-btn>
+          <v-btn text @click="deleteDialog=false">ยกเลิก</v-btn>
+          <v-btn color="error" @click="confirmDelete">ลบ</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -192,25 +170,11 @@ const categories = ref([])
 const dialog = ref(false)
 const editing = ref(null)
 
+const deleteDialog = ref(false)
+const deleteItem = ref(null)
+
 const selectedCategory = ref(null)
 
-const categoryDialog = ref(false)
-const categoryName = ref('')
-
-/* EDIT */
-const editDialog = ref(false)
-const editItem = ref(null)
-const editName = ref('')
-
-/* DELETE SERVICE */
-const deleteServiceDialog = ref(false)
-const deleteServiceItem = ref(null)
-
-/* DELETE CATEGORY */
-const deleteCategoryDialog = ref(false)
-const deleteCategoryItem = ref(null)
-
-/* pagination */
 const page = ref(1)
 const itemsPerPage = 10
 
@@ -257,59 +221,23 @@ function openEdit(s) {
   dialog.value = true
 }
 
+/* DELETE */
 function openDeleteService(s) {
-  deleteServiceItem.value = s
-  deleteServiceDialog.value = true
+  deleteItem.value = s
+  deleteDialog.value = true
 }
 
-async function confirmDeleteService() {
-  await api(`/api/services/${deleteServiceItem.value.id}`, { method: 'DELETE' })
-  deleteServiceDialog.value = false
+async function confirmDelete() {
+  await api(`/api/services/${deleteItem.value.id}`, {
+    method: 'DELETE'
+  })
+  deleteDialog.value = false
   loadServices()
 }
 
 async function onSaved() {
   dialog.value = false
   loadServices()
-}
-
-/* CATEGORY */
-async function createCategory() {
-  if (!categoryName.value) return
-  await api('/api/categories', {
-    method: 'POST',
-    body: { name: categoryName.value }
-  })
-  categoryName.value = ''
-  loadCategories()
-}
-
-function openEditDialog(c) {
-  editItem.value = c
-  editName.value = c.name
-  editDialog.value = true
-}
-
-async function saveEdit() {
-  await api(`/api/categories/${editItem.value.id}`, {
-    method: 'PUT',
-    body: { name: editName.value }
-  })
-  editDialog.value = false
-  loadCategories()
-}
-
-function openDeleteCategory(c) {
-  deleteCategoryItem.value = c
-  deleteCategoryDialog.value = true
-}
-
-async function confirmDeleteCategory() {
-  await api(`/api/categories/${deleteCategoryItem.value.id}`, {
-    method: 'DELETE'
-  })
-  deleteCategoryDialog.value = false
-  loadCategories()
 }
 
 /* INIT */
@@ -340,9 +268,36 @@ onMounted(() => {
   padding:10px;
 }
 
-.category-item {
-  display:flex;
-  justify-content:space-between;
-  padding:8px 0;
+/* ===== ACTION BUTTON STYLE ===== */
+
+.action-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  min-width: 42px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+}
+
+/* edit */
+.action-btn.edit {
+  background: #ffffff;
+  color: #374151;
+}
+
+/* delete */
+.action-btn.delete {
+  background: #dc2626;
+  color: white;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
 }
 </style>

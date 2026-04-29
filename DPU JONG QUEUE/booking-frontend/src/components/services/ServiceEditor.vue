@@ -67,9 +67,8 @@
             <div class="panel right-panel">
 
               <div class="section-title">ข้อมูลบริการ</div>
-              
-              <!-- 🔥 Upload Image -->
-           <v-col position="center">    
+
+              <!-- Upload -->
               <v-file-input
                 label="รูปบริการ"
                 accept="image/*"
@@ -77,26 +76,32 @@
                 :loading="uploading"
                 class="mt-3 rounded-lg"
               />
-            <div class="section-title">รูป preview</div>
+
+              <div class="section-title">รูป preview</div>
+
               <div class="image-preview">
-              <v-img
-                v-if="form.image_url"
-                :src="form.image_url"
-                contain
-                max-height="80%"
-                max-width="80%"
-              />
-            
-            </div>
+                <v-img
+                  v-if="form.image_url"
+                  :src="form.image_url"
+                  contain
+                  max-height="80%"
+                  max-width="80%"
+                />
+              </div>
 
-            <div class="warning-text">
-              แนะนำ 800x600 ขนาดไม่เกิน 200KB
-            </div>
-
-            </v-col>
+              <div class="warning-text">
+                แนะนำ 800x600 ขนาดไม่เกิน 200KB
+              </div>
 
               <v-text-field v-model="form.name" label="ชื่อบริการ"/>
-              <v-select v-model="form.categoryId" :items="categories" item-title="name" item-value="id" label="หมวดหมู่"/>
+
+              <v-select
+                v-model="form.categoryId"
+                :items="categories"
+                item-title="name"
+                item-value="id"
+                label="หมวดหมู่"
+              />
 
               <v-row>
                 <v-col cols="6">
@@ -117,7 +122,26 @@
               </v-row>
 
               <v-textarea v-model="form.description" label="รายละเอียด"/>
+
               <v-switch v-model="form.active" label="เปิดใช้งาน"/>
+
+              <!-- 🔥 AUTO CANCEL -->
+              <v-divider class="my-4" />
+
+              <div class="section-title">ตั้งค่าการยกเลิกอัตโนมัติ</div>
+
+              <v-switch
+                v-model="form.autoCancelEnabled"
+                label="เปิดยกเลิกอัตโนมัติ"
+              />
+
+              <v-text-field
+                v-if="form.autoCancelEnabled"
+                v-model.number="form.autoCancelMinutes"
+                type="number"
+                label="มาสายเกิน (นาที)"
+                min="1"
+              />
 
             </div>
           </v-col>
@@ -133,18 +157,6 @@
       </v-card-actions>
 
     </v-card>
-
-    <!-- DELETE -->
-    <v-dialog v-model="deleteDialog" max-width="350">
-      <v-card>
-        <v-card-title>ยืนยันลบ</v-card-title>
-        <v-card-actions class="justify-end">
-          <v-btn text @click="deleteDialog=false">ยกเลิก</v-btn>
-          <v-btn color="error" @click="removeHoliday">ลบ</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
   </v-dialog>
 </template>
 
@@ -162,13 +174,7 @@ const holidays = ref([])
 const selectedDays = ref([])
 const calendarDate = ref(null)
 
-const deleteDialog = ref(false)
-const deleteIndex = ref(null)
-
 const uploading = ref(false)
-
-/* สำคัญ */
-const originalWeekly = ref([])
 
 const form = ref({
   name: '',
@@ -179,7 +185,11 @@ const form = ref({
   slotDurationMin: 60,
   description: '',
   active: true,
-  image_url: ''
+  image_url: '',
+
+  // 🔥 AUTO CANCEL
+  autoCancelEnabled: false,
+  autoCancelMinutes: 10,
 })
 
 const days = [
@@ -196,65 +206,19 @@ async function loadCategories(){
   categories.value = await api('/api/categories')
 }
 
-async function loadHoliday(){
-  if (!props.service?.id) return
-
-  holidays.value = []
-  selectedDays.value = []
-  originalWeekly.value = []
-
-  const res = await api(`/api/services/${props.service.id}/holidays`)
-
-  holidays.value = (res.holidays || []).map(h => h.date)
-
-  const weekly = res.weekly || []
-
-  selectedDays.value = [...new Set(
-    weekly.map(w => w.day_of_week)
-  )]
-
-  originalWeekly.value = weekly
-}
-
 watch(() => props.service, async (s) => {
   if (s) {
     form.value = {
       ...s,
       categoryId: s.category_id || s.categoryId,
-      image_url: s.image_url || ''
+      image_url: s.image_url || '',
+
+      autoCancelEnabled: s.autoCancelEnabled ?? false,
+      autoCancelMinutes: s.autoCancelMinutes ?? 10,
     }
-    await loadHoliday()
   }
 }, { immediate: true })
 
-function allowedDates(val){
-  const day = new Date(val).getDay()
-  return !selectedDays.value.includes(day)
-}
-
-function formatDate(d){
-  const date = new Date(d)
-  return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`
-}
-
-function addHoliday(){
-  if (!calendarDate.value) return
-  if (!holidays.value.includes(calendarDate.value)) {
-    holidays.value.push(calendarDate.value)
-  }
-}
-
-function confirmRemoveHoliday(i){
-  deleteIndex.value = i
-  deleteDialog.value = true
-}
-
-function removeHoliday(){
-  holidays.value.splice(deleteIndex.value, 1)
-  deleteDialog.value = false
-}
-
-/* 🔥 Upload Image (แก้สมบูรณ์) */
 async function uploadImage(files){
   try {
     const file = Array.isArray(files) ? files[0] : files
@@ -272,13 +236,9 @@ async function uploadImage(files){
 
     const data = await res.json()
 
-    if (!data.url) {
-      throw new Error("Upload failed")
-    }
+    if (!data.url) throw new Error("Upload failed")
 
     form.value.image_url = data.url
-
-    console.log("UPLOAD SUCCESS:", data.url)
 
   } catch (err) {
     console.error(err)
@@ -291,8 +251,6 @@ async function uploadImage(files){
 async function save(){
   try {
     if (!form.value.name) return alert('กรอกชื่อบริการ')
-
-    console.log("SAVE DATA:", form.value)
 
     let serviceId = form.value.id
 
@@ -308,14 +266,6 @@ async function save(){
       })
       serviceId = res.id
     }
-
-    await api(`/api/services/${serviceId}/reset-holidays`, {
-      method: 'POST',
-      body: {
-        holidays: holidays.value,
-        weekly: selectedDays.value
-      }
-    })
 
     emit('saved')
 
@@ -334,44 +284,19 @@ onMounted(loadCategories)
   border-radius: 12px;
   padding: 16px;
 }
-
 .left-panel { background: #fafafa; }
 .right-panel { background: #fff; }
-
 .section-title { font-weight: 600; margin-bottom: 10px; }
-.sub-title { font-size: 13px; color: #6b7280; }
-
-.calendar-small {
-  transform: scale(0.7);
-  transform-origin: top left;
-}
-
-.holiday-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.image-box {
-  border: 2px solid #e5e7eb; /* สีเทาอ่อน */
-  border-radius: 12px;       /* มุมโค้ง */
-  background-color: #f9fafb; /* พื้นหลัง (กันโล่ง) */
-}
-
 .image-preview {
   height: 250px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
-  background-color: #f9fafb;
-
   display: flex;
-  justify-content: center; /* กึ่งกลางแนวนอน */
-  align-items: center;     /* กึ่งกลางแนวตั้ง */
+  justify-content: center;
+  align-items: center;
 }
-
 .warning-text {
-  color: #dc2626;
-  font-size: 14px;
-  font-weight: 600;
+  color: red;
+  font-size: 13px;
 }
 </style>

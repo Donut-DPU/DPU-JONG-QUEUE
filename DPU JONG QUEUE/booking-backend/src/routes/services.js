@@ -75,7 +75,11 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
       dailyEndTime,
       slotDurationMin,
       slotCapacity,
-      image_url,   // 🔥 เพิ่ม
+      image_url,
+
+      // ✅ เพิ่มตรงนี้
+      autoCancelEnabled,
+      autoCancelMinutes,
     } = req.body;
 
     const s = await Service.create({
@@ -86,7 +90,11 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
       dailyEndTime,
       slotDurationMin,
       slotCapacity,
-      image_url,   // 🔥 เพิ่ม
+      image_url,
+
+      // ✅ เพิ่มตรงนี้
+      autoCancelEnabled,
+      autoCancelMinutes,
     });
 
     res.json(s);
@@ -115,7 +123,11 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
       slotDurationMin,
       slotCapacity,
       active,
-      image_url,   // 🔥 เพิ่ม
+      image_url,
+
+      // ✅ เพิ่มตรงนี้
+      autoCancelEnabled,
+      autoCancelMinutes,
     } = req.body;
 
     await s.update({
@@ -127,7 +139,11 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
       slotDurationMin,
       slotCapacity,
       active,
-      image_url,   // 🔥 เพิ่ม
+      image_url,
+
+      // ✅ เพิ่มตรงนี้
+      autoCancelEnabled,
+      autoCancelMinutes,
     });
 
     res.json(s);
