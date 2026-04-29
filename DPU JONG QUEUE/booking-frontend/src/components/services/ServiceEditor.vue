@@ -67,7 +67,7 @@
             <div class="panel right-panel">
 
               <div class="section-title">ข้อมูลบริการ</div>
-
+              
               <!-- Upload -->
               <v-file-input
                 label="รูปบริการ"
@@ -94,14 +94,7 @@
               </div>
 
               <v-text-field v-model="form.name" label="ชื่อบริการ"/>
-
-              <v-select
-                v-model="form.categoryId"
-                :items="categories"
-                item-title="name"
-                item-value="id"
-                label="หมวดหมู่"
-              />
+              <v-select v-model="form.categoryId" :items="categories" item-title="name" item-value="id" label="หมวดหมู่"/>
 
               <v-row>
                 <v-col cols="6">
@@ -122,17 +115,16 @@
               </v-row>
 
               <v-textarea v-model="form.description" label="รายละเอียด"/>
-
               <v-switch v-model="form.active" label="เปิดใช้งาน"/>
 
-              <!-- 🔥 AUTO CANCEL -->
-              <v-divider class="my-4" />
+              <!-- 🔥 AUTO CANCEL (เพิ่มใหม่) -->
+              <v-divider class="my-4"/>
 
-              <div class="section-title">ตั้งค่าการยกเลิกอัตโนมัติ</div>
+              <div class="section-title">ตั้งค่า Auto Cancel</div>
 
               <v-switch
                 v-model="form.autoCancelEnabled"
-                label="เปิดยกเลิกอัตโนมัติ"
+                label="เปิดใช้งาน Auto Cancel"
               />
 
               <v-text-field
@@ -157,6 +149,18 @@
       </v-card-actions>
 
     </v-card>
+
+    <!-- DELETE -->
+    <v-dialog v-model="deleteDialog" max-width="350">
+      <v-card>
+        <v-card-title>ยืนยันลบ</v-card-title>
+        <v-card-actions class="justify-end">
+          <v-btn text @click="deleteDialog=false">ยกเลิก</v-btn>
+          <v-btn color="error" @click="removeHoliday">ลบ</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </v-dialog>
 </template>
 
@@ -174,6 +178,9 @@ const holidays = ref([])
 const selectedDays = ref([])
 const calendarDate = ref(null)
 
+const deleteDialog = ref(false)
+const deleteIndex = ref(null)
+
 const uploading = ref(false)
 
 const form = ref({
@@ -189,7 +196,7 @@ const form = ref({
 
   // 🔥 AUTO CANCEL
   autoCancelEnabled: false,
-  autoCancelMinutes: 10,
+  autoCancelMinutes: 10
 })
 
 const days = [
@@ -206,6 +213,15 @@ async function loadCategories(){
   categories.value = await api('/api/categories')
 }
 
+async function loadHoliday(){
+  if (!props.service?.id) return
+
+  const res = await api(`/api/services/${props.service.id}/holidays`)
+
+  holidays.value = (res.holidays || []).map(h => h.date)
+  selectedDays.value = (res.weekly || []).map(w => w.day_of_week)
+}
+
 watch(() => props.service, async (s) => {
   if (s) {
     form.value = {
@@ -214,10 +230,38 @@ watch(() => props.service, async (s) => {
       image_url: s.image_url || '',
 
       autoCancelEnabled: s.autoCancelEnabled ?? false,
-      autoCancelMinutes: s.autoCancelMinutes ?? 10,
+      autoCancelMinutes: s.autoCancelMinutes ?? 10
     }
+    await loadHoliday()
   }
 }, { immediate: true })
+
+function allowedDates(val){
+  const day = new Date(val).getDay()
+  return !selectedDays.value.includes(day)
+}
+
+function formatDate(d){
+  const date = new Date(d)
+  return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`
+}
+
+function addHoliday(){
+  if (!calendarDate.value) return
+  if (!holidays.value.includes(calendarDate.value)) {
+    holidays.value.push(calendarDate.value)
+  }
+}
+
+function confirmRemoveHoliday(i){
+  deleteIndex.value = i
+  deleteDialog.value = true
+}
+
+function removeHoliday(){
+  holidays.value.splice(deleteIndex.value, 1)
+  deleteDialog.value = false
+}
 
 async function uploadImage(files){
   try {
@@ -235,14 +279,8 @@ async function uploadImage(files){
     })
 
     const data = await res.json()
-
-    if (!data.url) throw new Error("Upload failed")
-
     form.value.image_url = data.url
 
-  } catch (err) {
-    console.error(err)
-    alert("อัปโหลดรูปไม่สำเร็จ")
   } finally {
     uploading.value = false
   }
@@ -267,6 +305,14 @@ async function save(){
       serviceId = res.id
     }
 
+    await api(`/api/services/${serviceId}/reset-holidays`, {
+      method: 'POST',
+      body: {
+        holidays: holidays.value,
+        weekly: selectedDays.value
+      }
+    })
+
     emit('saved')
 
   } catch (e) {
@@ -286,17 +332,34 @@ onMounted(loadCategories)
 }
 .left-panel { background: #fafafa; }
 .right-panel { background: #fff; }
+
 .section-title { font-weight: 600; margin-bottom: 10px; }
+.sub-title { font-size: 13px; color: #6b7280; }
+
+.calendar-small {
+  transform: scale(0.7);
+  transform-origin: top left;
+}
+
+.holiday-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .image-preview {
   height: 250px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
+  background-color: #f9fafb;
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .warning-text {
-  color: red;
-  font-size: 13px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 600;
 }
 </style>
