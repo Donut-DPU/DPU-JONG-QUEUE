@@ -135,6 +135,24 @@
                 min="1"
               />
 
+              <v-divider class="my-4" />
+
+              <h3 class="text-subtitle-1 mb-2">
+                Auto Confirm
+              </h3>
+
+              <v-switch
+                v-model="form.autoConfirmEnabled"
+                label="เปิดใช้งานยืนยันอัตโนมัติ"
+              />
+
+              <v-text-field
+                v-if="form.autoConfirmEnabled"
+                v-model="form.autoConfirmMinutes"
+                type="number"
+                label="ยืนยันอัตโนมัติหลังจาก (นาที)"
+              />
+
             </div>
           </v-col>
 
