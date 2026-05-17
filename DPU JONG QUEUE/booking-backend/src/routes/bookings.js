@@ -354,11 +354,15 @@ router.post("/", authRequired, async (req, res) => {
     // 🔥 AUTO CONFIRM
     // =====================================================
 
-    let bookingStatus = "pending";
 
-    if (service.autoConfirmEnabled) {
-      bookingStatus = "confirmed";
-    }
+    const bookingStatus = "pending";
+
+    // let bookingStatus = "pending";
+
+    // if (service.autoConfirmEnabled) {
+    //   bookingStatus = "confirmed";
+    // }
+
 
     // =====================================================
     // CREATE BOOKING

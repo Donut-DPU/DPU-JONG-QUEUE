@@ -4,68 +4,75 @@ import { Op } from "sequelize";
 import Booking from "../models/Booking.js";
 import Service from "../models/Service.js";
 
-// รันทุก 1 นาที
-cron.schedule("* * * * *", async () => {
+export default function startAutoConfirmJob() {
 
-  try {
+  console.log("✅ Auto Confirm Job Started");
 
-    console.log("AUTO CONFIRM JOB RUNNING");
+  cron.schedule("* * * * *", async () => {
 
-    // หา booking pending ทั้งหมด
-    const bookings = await Booking.findAll({
-      where: {
-        status: "pending"
-      },
+    try {
 
-      include: [
-        {
-          model: Service
-        }
-      ]
-    });
+      console.log("⏰ AUTO CONFIRM WORKING");
 
-    for (const booking of bookings) {
+      const bookings = await Booking.findAll({
+        where: {
+          status: "pending"
+        },
 
-      const service = booking.Service;
+        include: [
+          {
+            model: Service,
+            required: true
+          }
+        ]
+      });
 
-      // ไม่เปิด auto confirm
-      if (!service?.autoConfirmEnabled) {
-        continue;
-      }
-
-      // นาทีที่ตั้งไว้
-      const confirmMinutes =
-        service.autoConfirmMinutes || 0;
-
-      // เวลาสร้าง booking
-      const createdAt =
-        new Date(booking.createdAt);
-
-      // เวลาปัจจุบัน
       const now = new Date();
 
-      // ต่างกันกี่นาที
-      const diffMinutes =
-        (now - createdAt) / 1000 / 60;
+      for (const booking of bookings) {
 
-      // ครบเวลาแล้ว
-      if (diffMinutes >= confirmMinutes) {
+        const service = booking.Service;
 
-        booking.status = "confirmed";
+        // ปิดอยู่
+        if (!service.autoConfirmEnabled) {
+          continue;
+        }
 
-        await booking.save();
+        const minutes =
+          service.autoConfirmMinutes || 0;
 
-        console.log(
-          `AUTO CONFIRMED #${booking.id}`
-        );
+        // เวลาสร้าง booking
+        const createdAt =
+          new Date(booking.createdAt);
+
+        // เวลาที่ต้อง confirm
+        const confirmTime =
+          new Date(
+            createdAt.getTime() +
+            minutes * 60 * 1000
+          );
+
+        // ถึงเวลาแล้ว
+        if (now >= confirmTime) {
+
+          booking.status = "confirmed";
+
+          await booking.save();
+
+          console.log(
+            `✅ AUTO CONFIRMED #${booking.id}`
+          );
+        }
       }
+
+    } catch (e) {
+
+      console.error(
+        "AUTO CONFIRM ERROR:",
+        e.message
+      );
     }
 
-  } catch (e) {
+  });
 
-    console.error(
-      "AUTO CONFIRM ERROR:",
-      e
-    );
-  }
-});
+}
