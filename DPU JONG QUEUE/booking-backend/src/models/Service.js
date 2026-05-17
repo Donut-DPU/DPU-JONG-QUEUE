@@ -58,14 +58,17 @@ Service.init(
     },
 
     autoConfirmEnabled: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: "auto_confirm_enabled",
     },
 
     autoConfirmMinutes: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 0,
+      field: "auto_confirm_minutes",
     },
+
   },
   {
     sequelize,

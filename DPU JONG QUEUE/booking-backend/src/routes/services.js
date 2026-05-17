@@ -1,4 +1,5 @@
 // booking-backend/src/routes/services.js
+
 import { Router } from "express";
 import { authRequired, adminOnly } from "../middleware/auth.js";
 import Service from "../models/Service.js";
@@ -18,6 +19,7 @@ router.get("/", async (req, res) => {
     const { categoryId } = req.query;
 
     const where = {};
+
     if (categoryId) {
       where.category_id = categoryId;
     }
@@ -34,9 +36,15 @@ router.get("/", async (req, res) => {
     });
 
     res.json(services);
+
   } catch (e) {
+
     console.error("GET SERVICES ERROR:", e);
-    res.status(500).json({ message: e.message });
+
+    res.status(500).json({
+      message: e.message
+    });
+
   }
 });
 
@@ -47,16 +55,32 @@ router.get("/", async (req, res) => {
  */
 router.get("/:id", async (req, res) => {
   try {
+
     const s = await Service.findByPk(req.params.id, {
-      include: [{ model: Category, attributes: ["id", "name"] }],
+      include: [
+        {
+          model: Category,
+          attributes: ["id", "name"]
+        }
+      ],
     });
 
-    if (!s) return res.status(404).json({ message: "Not found" });
+    if (!s) {
+      return res.status(404).json({
+        message: "Not found"
+      });
+    }
 
     res.json(s);
+
   } catch (e) {
+
     console.error("GET SERVICE ERROR:", e);
-    res.status(500).json({ message: e.message });
+
+    res.status(500).json({
+      message: e.message
+    });
+
   }
 });
 
@@ -67,6 +91,7 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", authRequired, adminOnly, async (req, res) => {
   try {
+
     const {
       name,
       description,
@@ -77,30 +102,51 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
       slotCapacity,
       image_url,
 
-      // ✅ เพิ่มตรงนี้
+      /* AUTO CANCEL */
       autoCancelEnabled,
       autoCancelMinutes,
+
+      /* AUTO CONFIRM */
+      autoConfirmEnabled,
+      autoConfirmMinutes,
+
     } = req.body;
 
     const s = await Service.create({
+
       name,
       description,
+
       category_id: categoryId,
+
       dailyStartTime,
       dailyEndTime,
+
       slotDurationMin,
       slotCapacity,
+
       image_url,
 
-      // ✅ เพิ่มตรงนี้
+      /* AUTO CANCEL */
       autoCancelEnabled,
       autoCancelMinutes,
+
+      /* AUTO CONFIRM */
+      autoConfirmEnabled,
+      autoConfirmMinutes,
+
     });
 
     res.json(s);
+
   } catch (e) {
+
     console.error("CREATE SERVICE ERROR:", e);
-    res.status(500).json({ message: e.message });
+
+    res.status(500).json({
+      message: e.message
+    });
+
   }
 });
 
@@ -111,8 +157,14 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
  */
 router.put("/:id", authRequired, adminOnly, async (req, res) => {
   try {
+
     const s = await Service.findByPk(req.params.id);
-    if (!s) return res.status(404).json({ message: "Not found" });
+
+    if (!s) {
+      return res.status(404).json({
+        message: "Not found"
+      });
+    }
 
     const {
       name,
@@ -125,31 +177,52 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
       active,
       image_url,
 
-      // ✅ เพิ่มตรงนี้
+      /* AUTO CANCEL */
       autoCancelEnabled,
       autoCancelMinutes,
+
+      /* AUTO CONFIRM */
+      autoConfirmEnabled,
+      autoConfirmMinutes,
+
     } = req.body;
 
     await s.update({
+
       name,
       description,
+
       category_id: categoryId,
+
       dailyStartTime,
       dailyEndTime,
+
       slotDurationMin,
       slotCapacity,
+
       active,
       image_url,
 
-      // ✅ เพิ่มตรงนี้
+      /* AUTO CANCEL */
       autoCancelEnabled,
       autoCancelMinutes,
+
+      /* AUTO CONFIRM */
+      autoConfirmEnabled,
+      autoConfirmMinutes,
+
     });
 
     res.json(s);
+
   } catch (e) {
+
     console.error("UPDATE SERVICE ERROR:", e);
-    res.status(500).json({ message: e.message });
+
+    res.status(500).json({
+      message: e.message
+    });
+
   }
 });
 
@@ -160,38 +233,60 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
  */
 router.post("/:id/reset-holidays", authRequired, adminOnly, async (req, res) => {
   try {
-    const { holidays = [], weekly = [] } = req.body;
+
+    const {
+      holidays = [],
+      weekly = []
+    } = req.body;
+
     const serviceId = req.params.id;
 
     await ServiceHoliday.destroy({
-      where: { service_id: serviceId }
+      where: {
+        service_id: serviceId
+      }
     });
 
     await ServiceWeeklyOff.destroy({
-      where: { service_id: serviceId }
+      where: {
+        service_id: serviceId
+      }
     });
 
     const uniqueHolidays = [...new Set(holidays)];
+
     for (const d of uniqueHolidays) {
+
       await ServiceHoliday.create({
         service_id: serviceId,
         date: d,
       });
+
     }
 
     const uniqueWeekly = [...new Set(weekly)];
+
     for (const d of uniqueWeekly) {
+
       await ServiceWeeklyOff.create({
         service_id: serviceId,
         day_of_week: d,
       });
+
     }
 
-    res.json({ message: "updated" });
+    res.json({
+      message: "updated"
+    });
 
   } catch (e) {
+
     console.error("RESET HOLIDAY ERROR:", e);
-    res.status(500).json({ message: e.message });
+
+    res.status(500).json({
+      message: e.message
+    });
+
   }
 });
 
@@ -202,18 +297,32 @@ router.post("/:id/reset-holidays", authRequired, adminOnly, async (req, res) => 
  */
 router.get("/:id/holidays", authRequired, adminOnly, async (req, res) => {
   try {
+
     const holidays = await ServiceHoliday.findAll({
-      where: { service_id: req.params.id },
+      where: {
+        service_id: req.params.id
+      },
     });
 
     const weekly = await ServiceWeeklyOff.findAll({
-      where: { service_id: req.params.id },
+      where: {
+        service_id: req.params.id
+      },
     });
 
-    res.json({ holidays, weekly });
+    res.json({
+      holidays,
+      weekly
+    });
+
   } catch (e) {
+
     console.error("GET HOLIDAYS ERROR:", e);
-    res.status(500).json({ message: e.message });
+
+    res.status(500).json({
+      message: e.message
+    });
+
   }
 });
 

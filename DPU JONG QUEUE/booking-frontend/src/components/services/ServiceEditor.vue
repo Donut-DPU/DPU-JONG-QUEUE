@@ -214,7 +214,11 @@ const form = ref({
 
   // 🔥 AUTO CANCEL
   autoCancelEnabled: false,
-  autoCancelMinutes: 10
+  autoCancelMinutes: 10,
+
+  // 🔥 AUTO CONFIRM
+  autoConfirmEnabled: false,
+  autoConfirmMinutes: 0,
 })
 
 const days = [
@@ -232,63 +236,95 @@ async function loadCategories(){
 }
 
 async function loadHoliday(){
+
   if (!props.service?.id) return
 
   const res = await api(`/api/services/${props.service.id}/holidays`)
 
   holidays.value = (res.holidays || []).map(h => h.date)
+
   selectedDays.value = (res.weekly || []).map(w => w.day_of_week)
 }
 
 watch(() => props.service, async (s) => {
+
   if (s) {
+
     form.value = {
+
       ...s,
+
       categoryId: s.category_id || s.categoryId,
+
       image_url: s.image_url || '',
 
+      // 🔥 AUTO CANCEL
       autoCancelEnabled: s.autoCancelEnabled ?? false,
-      autoCancelMinutes: s.autoCancelMinutes ?? 10
+      autoCancelMinutes: s.autoCancelMinutes ?? 10,
+
+      // 🔥 AUTO CONFIRM
+      autoConfirmEnabled: s.autoConfirmEnabled ?? false,
+      autoConfirmMinutes: s.autoConfirmMinutes ?? 0,
     }
+
     await loadHoliday()
   }
+
 }, { immediate: true })
 
 function allowedDates(val){
+
   const day = new Date(val).getDay()
+
   return !selectedDays.value.includes(day)
 }
 
 function formatDate(d){
+
   const date = new Date(d)
+
   return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`
 }
 
 function addHoliday(){
+
   if (!calendarDate.value) return
+
   if (!holidays.value.includes(calendarDate.value)) {
+
     holidays.value.push(calendarDate.value)
+
   }
 }
 
 function confirmRemoveHoliday(i){
+
   deleteIndex.value = i
+
   deleteDialog.value = true
 }
 
 function removeHoliday(){
+
   holidays.value.splice(deleteIndex.value, 1)
+
   deleteDialog.value = false
 }
 
 async function uploadImage(files){
+
   try {
-    const file = Array.isArray(files) ? files[0] : files
+
+    const file = Array.isArray(files)
+      ? files[0]
+      : files
+
     if (!file) return
 
     uploading.value = true
 
     const formData = new FormData()
+
     formData.append("image", file)
 
     const res = await fetch("http://localhost:5000/api/upload", {
@@ -297,29 +333,40 @@ async function uploadImage(files){
     })
 
     const data = await res.json()
+
     form.value.image_url = data.url
 
   } finally {
+
     uploading.value = false
+
   }
 }
 
 async function save(){
+
   try {
-    if (!form.value.name) return alert('กรอกชื่อบริการ')
+
+    if (!form.value.name) {
+      return alert('กรอกชื่อบริการ')
+    }
 
     let serviceId = form.value.id
 
     if (serviceId) {
+
       await api(`/api/services/${serviceId}`, {
         method: 'PUT',
         body: form.value
       })
+
     } else {
+
       const res = await api('/api/services', {
         method: 'POST',
         body: form.value
       })
+
       serviceId = res.id
     }
 
@@ -334,13 +381,17 @@ async function save(){
     emit('saved')
 
   } catch (e) {
+
     console.error(e)
+
     alert(e?.message || 'บันทึกไม่สำเร็จ')
+
   }
 }
 
 onMounted(loadCategories)
 </script>
+
 
 <style scoped>
 .panel {
