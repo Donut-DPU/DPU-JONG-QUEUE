@@ -9,7 +9,8 @@
 // import "./models/Service.js";
 // import "./models/Booking.js";
 // import "./models/ServiceHoliday.js";
-// import "./models/ServiceWeeklyOff.js"
+// import "./models/ServiceWeeklyOff.js";
+// import "./jobs/autoConfirmBookings.js";
 
 // // ROUTES
 // import authRoutes from "./routes/auth.js";
@@ -17,6 +18,8 @@
 // import serviceRoutes from "./routes/services.js";
 // import bookingRoutes from "./routes/bookings.js";
 // import categoryRoutes from "./routes/categories.js";
+// import uploadRoutes from "./routes/upload.js"; // 👈 เพิ่มตรงนี้
+
 
 // import startAutoCancelJob from "./jobs/autoCancel.js";
 
@@ -27,20 +30,20 @@
 // app.use(cors());
 // app.use(express.json());
 
+// // ROUTES
 // app.use("/api/auth", authRoutes);
 // app.use("/api/admin", adminRoutes);
 // app.use("/api/services", serviceRoutes);
 // app.use("/api/bookings", bookingRoutes);
 // app.use("/api/categories", categoryRoutes);
+// app.use("/api/upload", uploadRoutes);
 
 // const start = async () => {
 //   try {
 //     await sequelize.authenticate();
 //     console.log("✅ DB connected");
 
-//     // ⚠️ ใช้ครั้งแรก
 //     await sequelize.sync({ alter: true });
-
 //     console.log("✅ DB synced");
 
 //     app.listen(process.env.PORT, () =>
@@ -75,9 +78,11 @@ import adminRoutes from "./routes/admin.js";
 import serviceRoutes from "./routes/services.js";
 import bookingRoutes from "./routes/bookings.js";
 import categoryRoutes from "./routes/categories.js";
-import uploadRoutes from "./routes/upload.js"; // 👈 เพิ่มตรงนี้
+import uploadRoutes from "./routes/upload.js";
 
+// JOBS
 import startAutoCancelJob from "./jobs/autoCancel.js";
+import startAutoConfirmJob from "./jobs/autoConfirmBookings.js";
 
 dotenv.config();
 
@@ -96,19 +101,29 @@ app.use("/api/upload", uploadRoutes);
 
 const start = async () => {
   try {
+
     await sequelize.authenticate();
     console.log("✅ DB connected");
 
     await sequelize.sync({ alter: true });
     console.log("✅ DB synced");
 
-    app.listen(process.env.PORT, () =>
-      console.log(`🚀 Server running http://localhost:${process.env.PORT}`)
-    );
+    app.listen(process.env.PORT, () => {
+      console.log(
+        `🚀 Server running http://localhost:${process.env.PORT}`
+      );
+    });
 
+    // ✅ START JOBS
     startAutoCancelJob();
+    startAutoConfirmJob();
+
+    console.log("✅ Auto Jobs Started");
+
   } catch (e) {
+
     console.error("🔥 ERROR:", e);
+
     process.exit(1);
   }
 };

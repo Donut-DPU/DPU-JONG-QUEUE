@@ -56,6 +56,19 @@ Service.init(
       defaultValue: 10,
       field: "auto_cancel_minutes",
     },
+
+    autoConfirmEnabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: "auto_confirm_enabled",
+    },
+
+    autoConfirmMinutes: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      field: "auto_confirm_minutes",
+    },
+
   },
   {
     sequelize,
@@ -63,6 +76,11 @@ Service.init(
     tableName: "services",
     underscored: true,
   }
+
+
+  
+
+
 );
 
 // relation
