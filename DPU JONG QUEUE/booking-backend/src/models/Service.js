@@ -44,7 +44,7 @@ Service.init(
       type: DataTypes.TEXT,
     },
 
-    // 🔥 ✅ เพิ่มตรงนี้ (สำคัญมาก)
+    // 🔥 AUTO CANCEL
     autoCancelEnabled: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -57,6 +57,7 @@ Service.init(
       field: "auto_cancel_minutes",
     },
 
+    // 🔥 AUTO CONFIRM
     autoConfirmEnabled: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -69,6 +70,13 @@ Service.init(
       field: "auto_confirm_minutes",
     },
 
+    // 🔥 ALLOW DUPLICATE BOOKING
+    allowDuplicateBooking: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: "allow_duplicate_booking",
+    },
+
   },
   {
     sequelize,
@@ -76,11 +84,6 @@ Service.init(
     tableName: "services",
     underscored: true,
   }
-
-
-  
-
-
 );
 
 // relation

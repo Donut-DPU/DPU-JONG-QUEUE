@@ -110,6 +110,9 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
       autoConfirmEnabled,
       autoConfirmMinutes,
 
+      /* DUPLICATE BOOKING */
+      allowDuplicateBooking,
+
     } = req.body;
 
     const s = await Service.create({
@@ -134,6 +137,9 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
       /* AUTO CONFIRM */
       autoConfirmEnabled,
       autoConfirmMinutes,
+
+      /* DUPLICATE BOOKING */
+      allowDuplicateBooking,
 
     });
 
@@ -185,6 +191,9 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
       autoConfirmEnabled,
       autoConfirmMinutes,
 
+      /* DUPLICATE BOOKING */
+      allowDuplicateBooking,
+
     } = req.body;
 
     await s.update({
@@ -210,6 +219,9 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
       /* AUTO CONFIRM */
       autoConfirmEnabled,
       autoConfirmMinutes,
+
+      /* DUPLICATE BOOKING */
+      allowDuplicateBooking,
 
     });
 

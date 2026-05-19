@@ -306,28 +306,51 @@ router.post("/", authRequired, async (req, res) => {
     }
 
     // =====================================================
-    // CHECK DUPLICATE
+    // CHECK USER ACTIVE BOOKING
     // =====================================================
 
-    const existsMine = await Booking.findOne({
-      where: {
-        user_id: userId,
-        service_id: serviceId,
-        date,
-        time,
+    // อ่านค่าจริงจาก DB
+    const allowDuplicate =
+      service.getDataValue("allowDuplicateBooking");
 
-        status: {
-          [Op.in]: ACTIVE_STATUSES
-        }
-      },
-    });
+    console.log(
+      "allowDuplicateBooking =",
+      allowDuplicate
+    );
 
-    if (existsMine) {
-      return res.status(409).json({
-        message: "You already booked this slot"
+    // ถ้าไม่อนุญาตให้จองซ้ำ
+    if (!allowDuplicate) {
+
+      const existsMine = await Booking.findOne({
+
+        where: {
+
+          user_id: userId,
+
+          service_id: serviceId,
+
+          status: {
+            [Op.in]: ACTIVE_STATUSES
+          }
+
+        },
+
       });
+
+      if (existsMine) {
+
+        return res.status(409).json({
+
+          message:
+            "คุณมีการจองบริการนี้อยู่แล้ว กรุณารอให้รายการเดิมเสร็จสิ้นก่อน"
+
+        });
+
+      }
+
     }
 
+    
     // =====================================================
     // CHECK FULL
     // =====================================================

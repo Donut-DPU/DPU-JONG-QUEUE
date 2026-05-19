@@ -153,6 +153,17 @@
                 label="ยืนยันอัตโนมัติหลังจาก (นาที)"
               />
 
+            <v-divider class="my-4" />
+
+            <h3 class="text-subtitle-1 mb-2">
+              ตั้งค่าการจองซ้ำ
+            </h3>
+
+            <v-switch
+              v-model="form.allowDuplicateBooking"
+              label="อนุญาตให้ลูกค้าจองซ้ำเวลาเดิม"
+            />
+
             </div>
           </v-col>
 
@@ -219,6 +230,7 @@ const form = ref({
   // 🔥 AUTO CONFIRM
   autoConfirmEnabled: false,
   autoConfirmMinutes: 0,
+  allowDuplicateBooking: false,
 })
 
 const days = [
@@ -265,6 +277,9 @@ watch(() => props.service, async (s) => {
       // 🔥 AUTO CONFIRM
       autoConfirmEnabled: s.autoConfirmEnabled ?? false,
       autoConfirmMinutes: s.autoConfirmMinutes ?? 0,
+
+      allowDuplicateBooking:
+        s.allowDuplicateBooking ?? false,
     }
 
     await loadHoliday()
