@@ -195,6 +195,53 @@
 
     </v-card>
   </v-dialog>
+
+  <!-- ✅ SUCCESS BOOKING DIALOG -->
+  <v-dialog
+    v-model="successDialog"
+    max-width="430"
+    persistent
+  >
+    <v-card class="success-card">
+
+      <v-card-text class="success-content">
+
+        <div class="success-icon-wrap">
+          <v-icon
+            size="72"
+            color="success"
+          >
+            mdi-check-circle
+          </v-icon>
+        </div>
+
+        <div class="success-title">
+          จองสำเร็จแล้ว
+        </div>
+
+        <div class="success-subtitle">
+          กรุณาตรวจสอบข้อมูลที่หน้า
+          <br />
+          “นัดหมายของคุณ”
+        </div>
+
+      </v-card-text>
+
+      <v-card-actions class="justify-center pb-5">
+
+        <v-btn
+          color="success"
+          size="large"
+          class="success-btn"
+          @click="closeSuccess"
+        >
+          รับทราบ
+        </v-btn>
+
+      </v-card-actions>
+
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
@@ -230,6 +277,22 @@ const errorMessage = ref('')
 function showError(message) {
   errorMessage.value = message
   errorDialog.value = true
+}
+
+/* =========================
+   SUCCESS DIALOG
+========================= */
+
+const successDialog = ref(false)
+const latestBooking = ref(null)
+
+function closeSuccess() {
+
+  successDialog.value = false
+
+  emit('booked', latestBooking.value)
+
+  emit('close')
 }
 
 /* =========================
@@ -448,11 +511,12 @@ async function book() {
       }
     )
 
+    latestBooking.value = b
+
     await loadSlots()
 
-    emit('booked', b)
-
-    emit('close')
+    // ✅ เปลี่ยนเป็น popup success
+    successDialog.value = true
 
   } catch (e) {
 
@@ -489,6 +553,40 @@ async function book() {
   overflow:hidden;
 }
 
+.success-card{
+  border-radius:24px;
+  overflow:hidden;
+}
+
+.success-content{
+  padding:36px 28px 20px;
+  text-align:center;
+}
+
+.success-icon-wrap{
+  margin-bottom:18px;
+}
+
+.success-title{
+  font-size:28px;
+  font-weight:800;
+  color:#111827;
+  margin-bottom:10px;
+}
+
+.success-subtitle{
+  font-size:15px;
+  color:#6b7280;
+  line-height:1.7;
+}
+
+.success-btn{
+  min-width:160px;
+  font-weight:700;
+  text-transform:none;
+  border-radius:12px;
+}
+
 .w-full{
   width:100%;
 }
@@ -504,6 +602,15 @@ async function book() {
 .justify-end{
   justify-content:flex-end;
   display:flex;
+}
+
+.justify-center{
+  justify-content:center;
+  display:flex;
+}
+
+.pb-5{
+  padding-bottom:20px;
 }
 
 .mb-1{
@@ -650,6 +757,10 @@ async function book() {
 
   .slot-grid{
     grid-template-columns:1fr;
+  }
+
+  .success-title{
+    font-size:24px;
   }
 
 }
