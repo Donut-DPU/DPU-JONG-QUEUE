@@ -139,8 +139,8 @@
 
         <v-card-text>
 
-          <v-text-field
-            v-model="form.full_name"
+         <v-text-field
+            v-model="form.fullName"
             label="ชื่อ - นามสกุล"
           />
 
@@ -356,7 +356,7 @@ const snackbar = ref({
 
 const form = ref({
   id: null,
-  full_name: '',
+  fullName: '',
   email: '',
   password: ''
 })
@@ -467,7 +467,7 @@ const openCreate = () => {
 
   form.value = {
     id: null,
-    full_name: '',
+    fullname: '',
     email: '',
     password: ''
   }
@@ -548,7 +548,7 @@ const submit = async () => {
     } else {
 
       await axios.post(
-        `${API}/api/admin/users/admin`,
+        `${API}/api/admin/users/create-admin`,
         form.value,
         {
           headers: {
