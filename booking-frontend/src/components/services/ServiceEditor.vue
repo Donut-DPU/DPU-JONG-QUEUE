@@ -314,6 +314,19 @@ function addHoliday(){
   }
 }
 
+function onFileChange(event) {
+
+  console.log("FILE EVENT:", event)
+
+  const file = event.target.files[0]
+
+  console.log("FILE:", file)
+
+  if (file) {
+    uploadImage(file)
+  }
+}
+
 function confirmRemoveHoliday(i){
 
   deleteIndex.value = i
