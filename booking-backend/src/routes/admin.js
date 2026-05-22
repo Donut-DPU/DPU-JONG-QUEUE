@@ -14,10 +14,6 @@ const router = Router();
  * =========================
  * GET USERS
  * =========================
- * ใช้:
- * /api/admin/users
- * /api/admin/users?role=user
- * /api/admin/users?role=admin
  */
 router.get(
   "/users",
@@ -118,13 +114,13 @@ router.post(
     try {
 
       const {
-        full_name,
+        fullName,
         email,
         password
       } = req.body;
 
       if (
-        !full_name ||
+        !fullName ||
         !email ||
         !password
       ) {
@@ -151,13 +147,21 @@ router.post(
       const hashed =
         await bcrypt.hash(password, 10);
 
+      const names = fullName.trim().split(" ");
+
+      const firstName = names[0] || "";
+      const lastName = names.slice(1).join(" ") || "";
+
       const user =
         await User.create({
 
-          full_name,
+          fullName,
+          firstName,
+          lastName,
+
           email,
 
-          password: hashed,
+          passwordHash: hashed,
 
           role: "admin"
         });
@@ -172,7 +176,7 @@ router.post(
       console.error(e);
 
       res.status(500).json({
-        message: "สร้าง admin ไม่สำเร็จ"
+        message: e.message || "สร้าง admin ไม่สำเร็จ"
       });
 
     }
@@ -205,13 +209,21 @@ router.put(
       }
 
       const {
-        full_name,
+        fullName,
         email
       } = req.body;
 
+      const names = fullName.trim().split(" ");
+
+      const firstName = names[0] || "";
+      const lastName = names.slice(1).join(" ") || "";
+
       await user.update({
 
-        full_name,
+        fullName,
+        firstName,
+        lastName,
+
         email
 
       });
@@ -274,7 +286,7 @@ router.put(
         await bcrypt.hash(newPassword, 10);
 
       await user.update({
-        password: hashed
+        passwordHash: hashed
       });
 
       res.json({
