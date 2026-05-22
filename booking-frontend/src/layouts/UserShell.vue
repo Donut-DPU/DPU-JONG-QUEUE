@@ -133,9 +133,9 @@
             ระบบจองคิวสำหรับผู้ใช้
           </div>
 
-          <div class="toolbar-sub">
+          <!-- <div class="toolbar-sub">
             ตรวจสอบบริการ · จองคิว · ดูนัดหมาย
-          </div>
+          </div> -->
 
         </div>
 
@@ -275,7 +275,7 @@ function logout() {
 }
 
 .page{
-  max-width:1200px;
+  max-width:1600px;
   margin:0 auto;
   padding:24px;
 }
@@ -348,6 +348,7 @@ function logout() {
 .topbar{
   background: rgba(255,255,255,.92) !important;
   backdrop-filter: blur(10px);
+  border-bottom:1px solid #d8d5e6;
 }
 
 /* hero */

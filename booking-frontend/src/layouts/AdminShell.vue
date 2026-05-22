@@ -10,7 +10,6 @@
       elevation="0"
     >
 
-      <!-- CONTENT WRAPPER (สำคัญ) -->
       <div class="drawer-inner">
 
         <!-- BRAND -->
@@ -22,8 +21,9 @@
 
           <div class="brand-text">
 
-            <div class="brand-title">DPU JONG</div>
-            <div class="brand-title">QUEUE</div>
+            <div class="brand-title">
+              DPU JONG QUEUE
+            </div>
 
             <div class="brand-sub">
               Admin Panel
@@ -35,7 +35,7 @@
 
         <div class="brand-divider"></div>
 
-        <!-- MENU (scroll ได้) -->
+        <!-- MENU -->
         <v-list
           density="comfortable"
           nav
@@ -55,7 +55,7 @@
 
         </v-list>
 
-        <!-- FOOTER (ตรึงล่าง) -->
+        <!-- FOOTER -->
         <div class="drawer-footer">
 
           <v-btn
@@ -97,7 +97,6 @@
 
         <div class="toolbar-wrap">
           <div class="toolbar-title">แดชบอร์ดผู้ดูแลระบบ</div>
-          <div class="toolbar-sub">จัดการระบบการจองคิว</div>
         </div>
 
       </v-toolbar-title>
@@ -106,9 +105,7 @@
 
     <!-- MAIN -->
     <v-main class="main-bg">
-
       <div class="page-scroll">
-
         <div class="page">
 
           <div class="hero-card">
@@ -129,9 +126,7 @@
           <router-view />
 
         </div>
-
       </div>
-
     </v-main>
 
   </v-app>
@@ -169,7 +164,57 @@ function logout() {
 <style scoped>
 
 /* =========================
-   FIX DRAWER LAYOUT (สำคัญสุด)
+   DRAWER BRAND FIX (ปรับ spacing)
+========================= */
+
+.brand-wrap{
+  display:flex;
+  align-items:center;
+  gap:12px; /* เดิม 14 -> ให้กระชับขึ้น */
+  padding:18px 18px 10px;
+}
+
+.brand-text{
+  display:flex;
+  flex-direction:column;
+}
+
+/* 🔥 FIX: ทำให้ DPU JONG / QUEUE ชิดขึ้น */
+.brand-title{
+  font-weight:800;
+  font-size:15px;
+  color:#581c87;
+  line-height:1.05;     /* สำคัญ */
+  margin:0;
+  padding:0;
+  letter-spacing:0.3px;
+}
+
+/* Admin Panel */
+.brand-sub{
+  font-size:12px;
+  color:#8b5cf6;
+  margin-top:2px;
+}
+
+/* divider */
+.brand-divider{
+  height:1px;
+  margin:8px 16px;
+  background:#ede9fe;
+}
+
+/* =========================
+   TOPBAR DIVIDER FIX
+========================= */
+
+/* 🔥 เส้นใต้แดชบอร์ดผู้ดูแลระบบ */
+.topbar{
+  border-bottom:1px solid #d8d5e6;
+}
+
+/* =========================
+   ORIGINAL STYLE (คงเดิม)
 ========================= */
 
 .admin-drawer :deep(.v-navigation-drawer__content){
@@ -182,34 +227,15 @@ function logout() {
   flex-direction: column;
 }
 
-/* =========================
-   MENU SCROLL FIX
-========================= */
-
 .menu-list{
   flex: 1;
   overflow-y: auto;
   padding: 10px;
 }
 
-/* =========================
-   FOOTER FIX (ไม่ให้เลื่อน)
-========================= */
-
 .drawer-footer{
   margin-top: auto;
   padding: 14px 16px 18px;
-}
-
-/* =========================
-   BRAND (เหมือน USER แล้ว)
-========================= */
-
-.brand-wrap{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:20px 18px 14px;
 }
 
 .logo-box{
@@ -230,21 +256,6 @@ function logout() {
   object-fit:contain;
 }
 
-.brand-title{
-  font-weight:800;
-  font-size:15px;
-  color:#581c87;
-}
-
-.brand-sub{
-  font-size:12px;
-  color:#8b5cf6;
-}
-
-/* =========================
-   ACTIVE MENU
-========================= */
-
 :deep(.v-list-item--active){
   background:linear-gradient(135deg,#7c3aed,#9333ea) !important;
   color:white !important;
@@ -253,10 +264,6 @@ function logout() {
 :deep(.v-list-item--active .v-icon){
   color:white !important;
 }
-
-/* =========================
-   BUTTON FIX
-========================= */
 
 .switch-btn,
 .logout-btn{
@@ -277,10 +284,6 @@ function logout() {
   color:white !important;
 }
 
-/* =========================
-   PAGE FIX
-========================= */
-
 .admin-layout{
   background:#f5f3ff;
 }
@@ -300,12 +303,11 @@ function logout() {
 }
 
 .page{
-  max-width:1280px;
+  max-width:1600px;
   margin:0 auto;
   padding:24px;
 }
 
-/* HERO */
 .hero-card{
   background:linear-gradient(135deg,#6d28d9,#8b5cf6);
   border-radius:28px;
@@ -337,7 +339,6 @@ function logout() {
   justify-content:center;
 }
 
-/* util */
 .text-primary{ color:#4c1d95; }
 
 </style>
