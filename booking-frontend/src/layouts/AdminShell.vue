@@ -187,7 +187,6 @@ function logout() {
   line-height:1.05;     /* สำคัญ */
   margin:0;
   padding:0;
-  letter-spacing:0.3px;
 }
 
 /* Admin Panel */
