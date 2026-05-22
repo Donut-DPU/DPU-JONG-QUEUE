@@ -351,9 +351,21 @@ async function uploadImage(files){
       body: formData
     })
 
+    if (!res.ok) {
+      throw new Error("Upload failed")
+    }
+
     const data = await res.json()
 
+    console.log("UPLOAD RESULT:", data)
+
     form.value.image_url = data.url
+
+  } catch (e) {
+
+    console.error("UPLOAD ERROR:", e)
+
+    alert("อัพโหลดรูปไม่สำเร็จ")
 
   } finally {
 
