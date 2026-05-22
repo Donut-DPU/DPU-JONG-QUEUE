@@ -17,9 +17,7 @@
     "vuetify": "^3.10.9"
   },
   "devDependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.60.4",
-    "@vitejs/plugin-vue": "^6.0.7",
-    "rollup": "^4.34.8",
-    "vite": "^7.3.3"
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vite": "^5.4.19"
   }
 }
