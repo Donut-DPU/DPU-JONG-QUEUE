@@ -72,9 +72,11 @@
               <v-file-input
                 label="รูปบริการ"
                 accept="image/*"
-                @update:modelValue="uploadImage"
+                show-size
+                prepend-icon="mdi-camera"
                 :loading="uploading"
                 class="mt-3 rounded-lg"
+                @change="onFileChange"
               />
 
               <div class="section-title">รูป preview</div>
@@ -326,13 +328,9 @@ function removeHoliday(){
   deleteDialog.value = false
 }
 
-async function uploadImage(files){
+async function uploadImage(file){
 
   try {
-
-    const file = Array.isArray(files)
-      ? files[0]
-      : files
 
     if (!file) return
 
