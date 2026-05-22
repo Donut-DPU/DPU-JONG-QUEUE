@@ -11,13 +11,17 @@
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "axios": "^1.15.2",
-    "vite-plugin-vuetify": "^2.1.2",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3",
     "vuetify": "^3.10.9"
   },
   "devDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.60.4",
     "@vitejs/plugin-vue": "^5.2.4",
-    "vite": "^5.4.19"
+    "vite": "^5.4.19",
+    "vite-plugin-vuetify": "^2.1.2"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
