@@ -1,13 +1,46 @@
 <!-- src/pages/admin/AdminSchedulePage.vue -->
 <template>
-  <div>
+  <div class="schedule-page">
+
+    <!-- LOADING -->
+    <transition name="fade">
+
+      <div
+        v-if="loadingOverlay"
+        class="loading-overlay"
+      >
+
+        <div class="loading-card">
+
+          <div class="loader-ring"></div>
+
+          <div class="loading-title">
+            กำลังโหลดตารางคิว
+          </div>
+
+          <div class="loading-subtitle">
+            กรุณารอสักครู่...
+          </div>
+
+        </div>
+
+      </div>
+
+    </transition>
+
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-2xl font-bold">ตารางคิวนัดหมาย</h2>
+
+      <h2 class="text-2xl font-bold">
+        ตารางคิวนัดหมาย
+      </h2>
+
     </div>
 
     <!-- ฟิลเตอร์ด้านบน -->
     <v-card class="mb-4 pa-4">
+
       <div class="flex flex-wrap gap items-end">
+
         <v-text-field
           v-model="date"
           type="date"
@@ -34,7 +67,9 @@
         >
           ค้นหาข้อมูล
         </v-btn>
+
       </div>
+
     </v-card>
 
     <v-alert
@@ -58,31 +93,60 @@
 
     <!-- ตาราง slot + สถานะ -->
     <v-card v-else>
+
       <v-card-title class="text-h6">
+
         ตารางคิวของบริการ:
+
         <span class="font-bold">
           {{ currentServiceName || '-' }}
         </span>
+
         <span class="text-gray-600">
           · วันที่ {{ fmtDate(date) }}
         </span>
+
       </v-card-title>
 
       <v-divider />
 
       <v-card-text>
+
         <v-table>
+
           <thead>
+
             <tr>
-              <th style="width:120px;">เวลา</th>
-              <th style="width:140px;">สถานะ</th>
-              <th>รายละเอียดการจอง</th>
+
+              <th style="width:120px;">
+                เวลา
+              </th>
+
+              <th style="width:140px;">
+                สถานะ
+              </th>
+
+              <th>
+                รายละเอียดการจอง
+              </th>
+
             </tr>
+
           </thead>
+
           <tbody>
-            <tr v-for="slot in slots" :key="slot.time">
-              <td>{{ slot.time }}</td>
+
+            <tr
+              v-for="slot in slots"
+              :key="slot.time"
+            >
+
               <td>
+                {{ slot.time }}
+              </td>
+
+              <td>
+
                 <v-chip
                   size="small"
                   :color="slotChipColor(slot)"
@@ -90,40 +154,61 @@
                 >
                   {{ slotStatusText(slot) }}
                 </v-chip>
+
                 <div class="text-xs text-gray-600">
                   คิวว่าง {{ slot.remaining }} / {{ slot.capacity }}
                 </div>
+
               </td>
+
               <td>
+
                 <div v-if="bookingsByTime[slot.time]?.length">
+
                   <div
                     v-for="b in bookingsByTime[slot.time]"
                     :key="b.id"
                     class="mb-1"
                   >
+
                     • #{{ b.id }}
+
                     - {{ b.User?.full_name || 'ไม่ทราบชื่อ' }}
+
                     ({{ b.status }})
+
                     <span v-if="b.note">
                       · {{ b.note }}
                     </span>
+
                   </div>
+
                 </div>
+
                 <div v-else class="text-gray-500">
                   – ยังไม่มีการจองในช่วงเวลานี้ –
                 </div>
+
               </td>
+
             </tr>
 
             <tr v-if="!loading && slots.length === 0">
+
               <td colspan="3" class="text-center py-6 text-gray-600">
                 วันนี้ไม่มีการตั้งเวลาให้บริการ
               </td>
+
             </tr>
+
           </tbody>
+
         </v-table>
+
       </v-card-text>
+
     </v-card>
+
   </div>
 </template>
 
@@ -138,6 +223,8 @@ const date = ref(new Date().toISOString().slice(0, 10))
 const serviceId = ref(null)
 
 const loading = ref(false)
+const loadingOverlay = ref(false)
+
 const errorMsg = ref('')
 
 const slots = ref([])     // จาก /api/bookings/slots
@@ -148,100 +235,307 @@ const serviceOptions = computed(() => services.value)
 
 // ชื่อบริการปัจจุบัน
 const currentServiceName = computed(() => {
-  const s = services.value.find(s => s.id === serviceId.value)
+
+  const s = services.value.find(
+    s => s.id === serviceId.value
+  )
+
   return s ? s.name : ''
 })
 
 // group booking ตาม time
 const bookingsByTime = computed(() => {
+
   const map = {}
+
   for (const b of bookings.value) {
-    if (!map[b.time]) map[b.time] = []
+
+    if (!map[b.time]) {
+      map[b.time] = []
+    }
+
     map[b.time].push(b)
   }
+
   return map
 })
 
 async function loadServices () {
+
   loadingServices.value = true
+
   try {
-    services.value = await api('/api/services?all=1')
-    if (!serviceId.value && services.value.length > 0) {
-      serviceId.value = services.value[0].id
+
+    services.value =
+      await api('/api/services?all=1')
+
+    if (
+      !serviceId.value &&
+      services.value.length > 0
+    ) {
+
+      serviceId.value =
+        services.value[0].id
     }
+
   } catch (e) {
+
     console.error(e)
+
   } finally {
+
     loadingServices.value = false
+
   }
 }
 
 async function loadData () {
+
   if (!serviceId.value || !date.value) return
+
   loading.value = true
+  loadingOverlay.value = true
+
   errorMsg.value = ''
+
   try {
-    // 1) โหลด slot ทั้งวัน (พร้อม remaining)
-    const s = await api(`/api/bookings/slots?serviceId=${serviceId.value}&date=${date.value}`)
+
+    // 1) โหลด slot ทั้งวัน
+    const s = await api(
+      `/api/bookings/slots?serviceId=${serviceId.value}&date=${date.value}`
+    )
+
     slots.value = s.slots || []
 
-    // 2) โหลด booking ของวันนั้นสำหรับ service นั้น
+    // 2) โหลด booking ของวันนั้น
     const q = new URLSearchParams()
+
     q.set('date', date.value)
+
     q.set('serviceId', serviceId.value)
-    bookings.value = await api(`/api/bookings/admin?${q.toString()}`)
+
+    bookings.value =
+      await api(
+        `/api/bookings/admin?${q.toString()}`
+      )
+
   } catch (e) {
-    errorMsg.value = e.message || 'โหลดตารางคิวไม่สำเร็จ'
+
+    errorMsg.value =
+      e.message ||
+      'โหลดตารางคิวไม่สำเร็จ'
+
   } finally {
+
     loading.value = false
+    loadingOverlay.value = false
+
   }
 }
 
 // ข้อความสถานะของ slot
 function slotStatusText (slot) {
-  if (slot.remaining <= 0) return 'เต็มแล้ว'
-  if (slot.booked > 0 && slot.remaining > 0) return 'จองบางส่วน'
+
+  if (slot.remaining <= 0) {
+    return 'เต็มแล้ว'
+  }
+
+  if (
+    slot.booked > 0 &&
+    slot.remaining > 0
+  ) {
+    return 'จองบางส่วน'
+  }
+
   return 'ว่าง'
 }
 
 // สี chip ตามสถานะ
 function slotChipColor (slot) {
-  if (slot.remaining <= 0) return 'error'
-  if (slot.booked > 0 && slot.remaining > 0) return 'warning'
+
+  if (slot.remaining <= 0) {
+    return 'error'
+  }
+
+  if (
+    slot.booked > 0 &&
+    slot.remaining > 0
+  ) {
+    return 'warning'
+  }
+
   return 'success'
 }
 
 // แสดงวันที่แบบไทย
 function fmtDate (d) {
+
   try {
-    return new Date(d).toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
+
+    return new Date(d)
+      .toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+
   } catch {
+
     return d
   }
 }
 
 onMounted(async () => {
+
+  loadingOverlay.value = true
+
   await loadServices()
+
   await loadData()
+
+  loadingOverlay.value = false
 })
 </script>
 
 <style scoped>
-.flex { display:flex; }
-.flex-wrap { flex-wrap: wrap; }
-.items-end { align-items:flex-end; }
-.items-center { align-items:center; }
-.justify-between { justify-content:space-between; }
-.mb-4 { margin-bottom:1rem; }
-.gap { gap:12px; }
-.text-2xl { font-size:1.5rem; }
-.font-bold { font-weight:700; }
-.text-gray-600 { color:#6b7280; }
-.text-gray-500 { color:#9ca3af; }
-.text-xs { font-size:0.75rem; }
-.py-6 { padding-top:1.5rem; padding-bottom:1.5rem; }
+.schedule-page {
+  position: relative;
+}
+
+.flex {
+  display:flex;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.items-end {
+  align-items:flex-end;
+}
+
+.items-center {
+  align-items:center;
+}
+
+.justify-between {
+  justify-content:space-between;
+}
+
+.mb-4 {
+  margin-bottom:1rem;
+}
+
+.gap {
+  gap:12px;
+}
+
+.text-2xl {
+  font-size:1.5rem;
+}
+
+.font-bold {
+  font-weight:700;
+}
+
+.text-gray-600 {
+  color:#6b7280;
+}
+
+.text-gray-500 {
+  color:#9ca3af;
+}
+
+.text-xs {
+  font-size:0.75rem;
+}
+
+.py-6 {
+  padding-top:1.5rem;
+  padding-bottom:1.5rem;
+}
+
+/* LOADING */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255,255,255,0.78);
+
+  backdrop-filter: blur(5px);
+}
+
+.loading-card {
+  width: 280px;
+
+  background: white;
+
+  border-radius: 26px;
+
+  padding: 34px 28px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  box-shadow:
+    0 15px 40px rgba(99,102,241,0.18);
+}
+
+.loader-ring {
+  width: 76px;
+  height: 76px;
+
+  border-radius: 999px;
+
+  border: 6px solid #e0e7ff;
+  border-top: 6px solid #4f46e5;
+
+  animation: spin 1s linear infinite;
+}
+
+.loading-title {
+  margin-top: 18px;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  color: #312e81;
+}
+
+.loading-subtitle {
+  margin-top: 8px;
+
+  font-size: 14px;
+
+  color: #6b7280;
+}
+
+@keyframes spin {
+
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all .25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

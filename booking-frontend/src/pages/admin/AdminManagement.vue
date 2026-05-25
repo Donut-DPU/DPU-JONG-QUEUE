@@ -1,327 +1,357 @@
 <template>
-  <v-card elevation="3" rounded="xl">
+  <div class="admin-page">
 
-    <!-- HEADER -->
-    <v-card-title class="d-flex justify-space-between align-center">
+    <!-- LOADING -->
+    <transition name="fade">
 
-      <span class="text-h6 font-weight-bold">
-        จัดการ Admin
-      </span>
-
-      <v-btn
-        color="primary"
-        prepend-icon="mdi-plus"
-        @click="openCreate"
+      <div
+        v-if="loading"
+        class="loading-overlay"
       >
-        เพิ่ม Admin
-      </v-btn>
 
-    </v-card-title>
+        <div class="loading-card">
 
-    <!-- TABLE -->
-    <v-data-table
-      :items="admins"
-      :headers="headers"
-    >
+          <div class="loader-ring"></div>
 
-      <!-- FULL NAME -->
-      <template #item.fullname="{ item }">
+          <div class="loading-title">
+            กำลังโหลดข้อมูล
+          </div>
 
-        {{
-          getFullName(item)
-        }}
-
-      </template>
-
-      <!-- ACTION -->
-      <template #item.actions="{ item }">
-
-        <div class="d-flex ga-2">
-
-          <!-- EDIT -->
-          <v-tooltip location="top">
-
-            <template #activator="{ props }">
-
-              <v-btn
-                icon
-                size="small"
-                v-bind="props"
-                @click="openEdit(
-                  normalizeItem(item)
-                )"
-              >
-                <v-icon>
-                  mdi-pencil
-                </v-icon>
-              </v-btn>
-
-            </template>
-
-            <span>
-              แก้ไข
-            </span>
-
-          </v-tooltip>
-
-          <!-- DELETE -->
-          <v-tooltip location="top">
-
-            <template #activator="{ props }">
-
-              <v-btn
-                icon
-                size="small"
-                color="error"
-                v-bind="props"
-                :disabled="normalizeItem(item).id === currentUser?.id"
-                @click="openDelete(
-                  normalizeItem(item)
-                )"
-              >
-                <v-icon>
-                  mdi-delete
-                </v-icon>
-              </v-btn>
-
-            </template>
-
-            <span>
-              ลบ
-            </span>
-
-          </v-tooltip>
-
-          <!-- RESET -->
-          <v-tooltip location="top">
-
-            <template #activator="{ props }">
-
-              <v-btn
-                icon
-                size="small"
-                color="warning"
-                v-bind="props"
-                @click="openReset(
-                  normalizeItem(item).id
-                )"
-              >
-                <v-icon>
-                  mdi-lock-reset
-                </v-icon>
-              </v-btn>
-
-            </template>
-
-            <span>
-              รีเซ็ตรหัส
-            </span>
-
-          </v-tooltip>
+          <div class="loading-subtitle">
+            กรุณารอสักครู่...
+          </div>
 
         </div>
 
-      </template>
+      </div>
 
-    </v-data-table>
+    </transition>
 
-    <!-- ================= FORM ================= -->
-    <v-dialog
-      v-model="dialog"
-      max-width="500"
-    >
+    <v-card elevation="3" rounded="xl">
 
-      <v-card rounded="xl">
+      <!-- HEADER -->
+      <v-card-title class="d-flex justify-space-between align-center">
 
-        <v-card-title>
-          {{ isEdit ? 'แก้ไข Admin' : 'เพิ่ม Admin' }}
-        </v-card-title>
+        <span class="text-h6 font-weight-bold">
+          จัดการ Admin
+        </span>
 
-        <v-card-text>
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-plus"
+          @click="openCreate"
+        >
+          เพิ่ม Admin
+        </v-btn>
 
-         <v-text-field
-            v-model="form.fullName"
-            label="ชื่อ - นามสกุล"
-          />
+      </v-card-title>
 
-          <v-text-field
-            v-model="form.email"
-            label="Email"
-          />
+      <!-- TABLE -->
+      <v-data-table
+        :items="admins"
+        :headers="headers"
+      >
 
-          <v-text-field
-            v-if="!isEdit"
-            v-model="form.password"
-            label="Password"
-            type="password"
-          />
+        <!-- FULL NAME -->
+        <template #item.fullname="{ item }">
 
-        </v-card-text>
+          {{
+            getFullName(item)
+          }}
 
-        <v-card-actions>
+        </template>
 
-          <v-spacer />
+        <!-- ACTION -->
+        <template #item.actions="{ item }">
 
-          <v-btn
-            text
-            @click="dialog = false"
-          >
-            ยกเลิก
-          </v-btn>
+          <div class="d-flex ga-2">
 
-          <v-btn
-            color="primary"
-            @click="openConfirm"
-          >
-            บันทึก
-          </v-btn>
+            <!-- EDIT -->
+            <v-tooltip location="top">
 
-        </v-card-actions>
+              <template #activator="{ props }">
 
-      </v-card>
+                <v-btn
+                  icon
+                  size="small"
+                  v-bind="props"
+                  @click="openEdit(
+                    normalizeItem(item)
+                  )"
+                >
+                  <v-icon>
+                    mdi-pencil
+                  </v-icon>
+                </v-btn>
 
-    </v-dialog>
+              </template>
 
-    <!-- ================= CONFIRM SAVE ================= -->
-    <v-dialog
-      v-model="confirmDialog"
-      max-width="400"
-    >
+              <span>
+                แก้ไข
+              </span>
 
-      <v-card>
+            </v-tooltip>
 
-        <v-card-title>
-          ยืนยัน
-        </v-card-title>
+            <!-- DELETE -->
+            <v-tooltip location="top">
 
-        <v-card-text>
+              <template #activator="{ props }">
 
-          คุณต้องการ
-          {{ isEdit ? 'แก้ไข' : 'สร้าง' }}
-          Admin ใช่หรือไม่?
+                <v-btn
+                  icon
+                  size="small"
+                  color="error"
+                  v-bind="props"
+                  :disabled="normalizeItem(item).id === currentUser?.id"
+                  @click="openDelete(
+                    normalizeItem(item)
+                  )"
+                >
+                  <v-icon>
+                    mdi-delete
+                  </v-icon>
+                </v-btn>
 
-        </v-card-text>
+              </template>
 
-        <v-card-actions>
+              <span>
+                ลบ
+              </span>
 
-          <v-spacer />
+            </v-tooltip>
 
-          <v-btn
-            text
-            @click="confirmDialog = false"
-          >
-            ยกเลิก
-          </v-btn>
+            <!-- RESET -->
+            <v-tooltip location="top">
 
-          <v-btn
-            color="primary"
-            @click="submit"
-          >
+              <template #activator="{ props }">
+
+                <v-btn
+                  icon
+                  size="small"
+                  color="warning"
+                  v-bind="props"
+                  @click="openReset(
+                    normalizeItem(item).id
+                  )"
+                >
+                  <v-icon>
+                    mdi-lock-reset
+                  </v-icon>
+                </v-btn>
+
+              </template>
+
+              <span>
+                รีเซ็ตรหัส
+              </span>
+
+            </v-tooltip>
+
+          </div>
+
+        </template>
+
+      </v-data-table>
+
+      <!-- ================= FORM ================= -->
+      <v-dialog
+        v-model="dialog"
+        max-width="500"
+      >
+
+        <v-card rounded="xl">
+
+          <v-card-title>
+            {{ isEdit ? 'แก้ไข Admin' : 'เพิ่ม Admin' }}
+          </v-card-title>
+
+          <v-card-text>
+
+            <v-text-field
+              v-model="form.fullName"
+              label="ชื่อ - นามสกุล"
+            />
+
+            <v-text-field
+              v-model="form.email"
+              label="Email"
+            />
+
+            <v-text-field
+              v-if="!isEdit"
+              v-model="form.password"
+              label="Password"
+              type="password"
+            />
+
+          </v-card-text>
+
+          <v-card-actions>
+
+            <v-spacer />
+
+            <v-btn
+              text
+              @click="dialog = false"
+            >
+              ยกเลิก
+            </v-btn>
+
+            <v-btn
+              color="primary"
+              @click="openConfirm"
+            >
+              บันทึก
+            </v-btn>
+
+          </v-card-actions>
+
+        </v-card>
+
+      </v-dialog>
+
+      <!-- ================= CONFIRM SAVE ================= -->
+      <v-dialog
+        v-model="confirmDialog"
+        max-width="400"
+      >
+
+        <v-card>
+
+          <v-card-title>
             ยืนยัน
-          </v-btn>
+          </v-card-title>
 
-        </v-card-actions>
+          <v-card-text>
 
-      </v-card>
+            คุณต้องการ
+            {{ isEdit ? 'แก้ไข' : 'สร้าง' }}
+            Admin ใช่หรือไม่?
 
-    </v-dialog>
+          </v-card-text>
 
-    <!-- ================= DELETE ================= -->
-    <v-dialog
-      v-model="deleteDialog"
-      max-width="400"
-    >
+          <v-card-actions>
 
-      <v-card>
+            <v-spacer />
 
-        <v-card-title>
-          ยืนยันการลบ
-        </v-card-title>
+            <v-btn
+              text
+              @click="confirmDialog = false"
+            >
+              ยกเลิก
+            </v-btn>
 
-        <v-card-text>
-          คุณต้องการลบ Admin นี้ใช่หรือไม่?
-        </v-card-text>
+            <v-btn
+              color="primary"
+              @click="submit"
+            >
+              ยืนยัน
+            </v-btn>
 
-        <v-card-actions>
+          </v-card-actions>
 
-          <v-spacer />
+        </v-card>
 
-          <v-btn
-            text
-            @click="deleteDialog = false"
-          >
-            ยกเลิก
-          </v-btn>
+      </v-dialog>
 
-          <v-btn
-            color="error"
-            @click="submitDelete"
-          >
-            ลบ
-          </v-btn>
+      <!-- ================= DELETE ================= -->
+      <v-dialog
+        v-model="deleteDialog"
+        max-width="400"
+      >
 
-        </v-card-actions>
+        <v-card>
 
-      </v-card>
+          <v-card-title>
+            ยืนยันการลบ
+          </v-card-title>
 
-    </v-dialog>
+          <v-card-text>
+            คุณต้องการลบ Admin นี้ใช่หรือไม่?
+          </v-card-text>
 
-    <!-- ================= RESET ================= -->
-    <v-dialog
-      v-model="resetDialog"
-      max-width="400"
-    >
+          <v-card-actions>
 
-      <v-card>
+            <v-spacer />
 
-        <v-card-title>
-          รีเซ็ตรหัสผ่าน
-        </v-card-title>
+            <v-btn
+              text
+              @click="deleteDialog = false"
+            >
+              ยกเลิก
+            </v-btn>
 
-        <v-card-text>
+            <v-btn
+              color="error"
+              @click="submitDelete"
+            >
+              ลบ
+            </v-btn>
 
-          <v-text-field
-            v-model="newPassword"
-            label="รหัสผ่านใหม่"
-            type="password"
-          />
+          </v-card-actions>
 
-        </v-card-text>
+        </v-card>
 
-        <v-card-actions>
+      </v-dialog>
 
-          <v-spacer />
+      <!-- ================= RESET ================= -->
+      <v-dialog
+        v-model="resetDialog"
+        max-width="400"
+      >
 
-          <v-btn
-            text
-            @click="resetDialog = false"
-          >
-            ยกเลิก
-          </v-btn>
+        <v-card>
 
-          <v-btn
-            color="warning"
-            @click="submitReset"
-          >
-            บันทึก
-          </v-btn>
+          <v-card-title>
+            รีเซ็ตรหัสผ่าน
+          </v-card-title>
 
-        </v-card-actions>
+          <v-card-text>
 
-      </v-card>
+            <v-text-field
+              v-model="newPassword"
+              label="รหัสผ่านใหม่"
+              type="password"
+            />
 
-    </v-dialog>
+          </v-card-text>
 
-    <!-- ================= SNACKBAR ================= -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      timeout="2500"
-    >
-      {{ snackbar.text }}
-    </v-snackbar>
+          <v-card-actions>
 
-  </v-card>
+            <v-spacer />
+
+            <v-btn
+              text
+              @click="resetDialog = false"
+            >
+              ยกเลิก
+            </v-btn>
+
+            <v-btn
+              color="warning"
+              @click="submitReset"
+            >
+              บันทึก
+            </v-btn>
+
+          </v-card-actions>
+
+        </v-card>
+
+      </v-dialog>
+
+      <!-- ================= SNACKBAR ================= -->
+      <v-snackbar
+        v-model="snackbar.show"
+        :color="snackbar.color"
+        timeout="2500"
+      >
+        {{ snackbar.text }}
+      </v-snackbar>
+
+    </v-card>
+
+  </div>
 </template>
 
 <script setup>
@@ -332,6 +362,8 @@ const API =
   'https://dpu-jong-queue.onrender.com'
 
 const admins = ref([])
+
+const loading = ref(false)
 
 const dialog = ref(false)
 const confirmDialog = ref(false)
@@ -421,6 +453,8 @@ const showSnack = (
 /* LOAD ADMINS */
 const fetchAdmins = async () => {
 
+  loading.value = true
+
   try {
 
     const token =
@@ -457,6 +491,11 @@ const fetchAdmins = async () => {
       'โหลดข้อมูลไม่สำเร็จ',
       'error'
     )
+
+  } finally {
+
+    loading.value = false
+
   }
 }
 
@@ -526,6 +565,8 @@ const submit = async () => {
 
   confirmDialog.value = false
 
+  loading.value = true
+
   const token =
     localStorage.getItem('token')
 
@@ -573,11 +614,18 @@ const submit = async () => {
       'ผิดพลาด',
       'error'
     )
+
+  } finally {
+
+    loading.value = false
+
   }
 }
 
 /* DELETE SUBMIT */
 const submitDelete = async () => {
+
+  loading.value = true
 
   const token =
     localStorage.getItem('token')
@@ -608,6 +656,11 @@ const submitDelete = async () => {
       'ลบไม่สำเร็จ',
       'error'
     )
+
+  } finally {
+
+    loading.value = false
+
   }
 }
 
@@ -623,6 +676,8 @@ const submitReset = async () => {
 
     return
   }
+
+  loading.value = true
 
   const token =
     localStorage.getItem('token')
@@ -655,8 +710,93 @@ const submitReset = async () => {
       'เกิดข้อผิดพลาด',
       'error'
     )
+
+  } finally {
+
+    loading.value = false
+
   }
 }
 
 onMounted(fetchAdmins)
 </script>
+
+<style scoped>
+.admin-page {
+  position: relative;
+}
+
+/* LOADING */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(4px);
+}
+
+.loading-card {
+  width: 260px;
+  padding: 32px 24px;
+
+  border-radius: 24px;
+  background: white;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  box-shadow:
+    0 12px 30px rgba(124,58,237,0.18);
+}
+
+.loader-ring {
+  width: 72px;
+  height: 72px;
+
+  border-radius: 50%;
+
+  border: 6px solid #ede9fe;
+  border-top: 6px solid #7c3aed;
+
+  animation: spin 1s linear infinite;
+}
+
+.loading-title {
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #5b21b6;
+}
+
+.loading-subtitle {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all .25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

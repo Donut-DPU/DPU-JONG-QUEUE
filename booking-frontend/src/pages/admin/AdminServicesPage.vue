@@ -1,6 +1,31 @@
-```vue
 <template>
-  <div>
+  <div class="page-wrap">
+
+    <!-- LOADING -->
+    <transition name="fade">
+
+      <div
+        v-if="loading"
+        class="loading-overlay"
+      >
+
+        <div class="loading-card">
+
+          <div class="loader-ring"></div>
+
+          <div class="loading-title">
+            กำลังโหลดข้อมูลบริการ
+          </div>
+
+          <div class="loading-subtitle">
+            กรุณารอสักครู่...
+          </div>
+
+        </div>
+
+      </div>
+
+    </transition>
 
     <!-- HEADER -->
     <div class="flex items-center justify-between mb-4">
@@ -64,10 +89,8 @@
 
               <th>นาที</th>
 
-              <!-- AUTO CONFIRM -->
               <th>Auto Confirm</th>
 
-              <!-- AUTO CANCEL -->
               <th>Auto Cancel</th>
 
               <th>สถานะ</th>
@@ -221,7 +244,7 @@
             </tr>
 
             <!-- EMPTY -->
-            <tr v-if="!services.length">
+            <tr v-if="!services.length && !loading">
 
               <td
                 colspan="9"
@@ -496,6 +519,9 @@ import ServiceEditor from '@/components/services/ServiceEditor.vue'
 const services = ref([])
 const categories = ref([])
 
+/* LOADING */
+const loading = ref(false)
+
 /* SERVICE */
 const dialog = ref(false)
 const editing = ref(null)
@@ -562,18 +588,31 @@ const rangeEnd = computed(() =>
 /* LOAD */
 async function loadServices() {
 
-  let url = '/api/services?all=1'
+  loading.value = true
 
-  if (selectedCategory.value) {
-    url += `&categoryId=${selectedCategory.value}`
+  try {
+
+    let url = '/api/services?all=1'
+
+    if (selectedCategory.value) {
+      url += `&categoryId=${selectedCategory.value}`
+    }
+
+    services.value = await api(url)
+
+  } finally {
+
+    loading.value = false
+
   }
 
-  services.value = await api(url)
 }
 
 async function loadCategories() {
+
   categories.value =
     await api('/api/categories')
+
 }
 
 watch(
@@ -605,16 +644,27 @@ function openDeleteService(s) {
 
 async function confirmDeleteService() {
 
-  await api(
-    `/api/services/${deleteServiceItem.value.id}`,
-    {
-      method: 'DELETE'
-    }
-  )
+  loading.value = true
 
-  deleteServiceDialog.value = false
+  try {
 
-  await loadServices()
+    await api(
+      `/api/services/${deleteServiceItem.value.id}`,
+      {
+        method: 'DELETE'
+      }
+    )
+
+    deleteServiceDialog.value = false
+
+    await loadServices()
+
+  } finally {
+
+    loading.value = false
+
+  }
+
 }
 
 async function onSaved() {
@@ -631,16 +681,27 @@ async function createCategory() {
 
   if (!categoryName.value) return
 
-  await api('/api/categories', {
-    method: 'POST',
-    body: {
-      name: categoryName.value
-    }
-  })
+  loading.value = true
 
-  categoryName.value = ''
+  try {
 
-  await loadCategories()
+    await api('/api/categories', {
+      method: 'POST',
+      body: {
+        name: categoryName.value
+      }
+    })
+
+    categoryName.value = ''
+
+    await loadCategories()
+
+  } finally {
+
+    loading.value = false
+
+  }
+
 }
 
 function openEditDialog(c) {
@@ -654,19 +715,30 @@ function openEditDialog(c) {
 
 async function saveEdit() {
 
-  await api(
-    `/api/categories/${editItem.value.id}`,
-    {
-      method: 'PUT',
-      body: {
-        name: editName.value
+  loading.value = true
+
+  try {
+
+    await api(
+      `/api/categories/${editItem.value.id}`,
+      {
+        method: 'PUT',
+        body: {
+          name: editName.value
+        }
       }
-    }
-  )
+    )
 
-  editDialog.value = false
+    editDialog.value = false
 
-  await loadCategories()
+    await loadCategories()
+
+  } finally {
+
+    loading.value = false
+
+  }
+
 }
 
 function openDeleteCategory(c) {
@@ -678,29 +750,55 @@ function openDeleteCategory(c) {
 
 async function confirmDeleteCategory() {
 
-  await api(
-    `/api/categories/${deleteCategoryItem.value.id}`,
-    {
-      method: 'DELETE'
-    }
-  )
+  loading.value = true
 
-  deleteCategoryDialog.value = false
+  try {
 
-  await loadCategories()
+    await api(
+      `/api/categories/${deleteCategoryItem.value.id}`,
+      {
+        method: 'DELETE'
+      }
+    )
+
+    deleteCategoryDialog.value = false
+
+    await loadCategories()
+
+  } finally {
+
+    loading.value = false
+
+  }
+
 }
 
 /* INIT */
-onMounted(() => {
+onMounted(async () => {
 
-  loadServices()
+  loading.value = true
 
-  loadCategories()
+  try {
+
+    await Promise.all([
+      loadServices(),
+      loadCategories()
+    ])
+
+  } finally {
+
+    loading.value = false
+
+  }
 
 })
 </script>
 
 <style scoped>
+.page-wrap {
+  position: relative;
+}
+
 .flex {
   display:flex;
 }
@@ -717,13 +815,19 @@ onMounted(() => {
   margin-bottom:1rem;
 }
 
+.mb-3 {
+  margin-bottom:0.75rem;
+}
+
 .gap {
   gap:10px;
 }
 
 .services-card {
   border:1px solid #e5e7eb;
-  border-radius:8px;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,0.04);
 }
 
 .text-center {
@@ -778,5 +882,76 @@ onMounted(() => {
 .action-btn:hover {
   transform:scale(1.1);
 }
+
+/* LOADING */
+.loading-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(255,255,255,0.78);
+  backdrop-filter:blur(4px);
+  z-index:9999;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.loading-card {
+  width:260px;
+  padding:32px 24px;
+  border-radius:24px;
+  background:white;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+
+  box-shadow:
+    0 10px 30px rgba(124,58,237,0.18);
+}
+
+.loader-ring {
+  width:70px;
+  height:70px;
+
+  border-radius:50%;
+
+  border:6px solid #ede9fe;
+  border-top:6px solid #7c3aed;
+
+  animation:spin 1s linear infinite;
+}
+
+.loading-title {
+  margin-top:18px;
+  font-size:18px;
+  font-weight:700;
+  color:#4c1d95;
+}
+
+.loading-subtitle {
+  margin-top:6px;
+  font-size:14px;
+  color:#6b7280;
+}
+
+@keyframes spin {
+  from {
+    transform:rotate(0deg);
+  }
+
+  to {
+    transform:rotate(360deg);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition:all 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity:0;
+}
 </style>
-```
