@@ -1,0 +1,298 @@
+<template>
+  <v-card elevation="3" rounded="xl">
+    <!-- HEADER -->
+    <v-card-title class="d-flex justify-space-between align-center">
+      <span class="text-h6 font-weight-bold">จัดการ Admin</span>
+
+      <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreate">
+        เพิ่ม Admin
+      </v-btn>
+    </v-card-title>
+
+    <!-- TABLE -->
+    <v-data-table :items="admins" :headers="headers">
+      
+      <template #item.fullname="{ item }">
+        {{ item.firstName }} {{ item.lastName }}
+      </template>
+
+      <template #item.actions="{ item }">
+        <div class="d-flex ga-2">
+
+          <!-- EDIT -->
+          <v-tooltip location="top">
+            <template #activator="{ props }">
+              <v-btn icon size="small" v-bind="props" @click="openEdit(item)">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+            </template>
+            <span>แก้ไข</span>
+          </v-tooltip>
+
+          <!-- DELETE -->
+          <v-tooltip location="top">
+            <template #activator="{ props }">
+              <v-btn icon size="small" color="error" v-bind="props" @click="openDelete(item)">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </template>
+            <span>ลบ</span>
+          </v-tooltip>
+
+          <!-- RESET -->
+          <v-tooltip location="top">
+            <template #activator="{ props }">
+              <v-btn icon size="small" color="warning" v-bind="props" @click="openReset(item.id)">
+                <v-icon>mdi-lock-reset</v-icon>
+              </v-btn>
+            </template>
+            <span>รีเซ็ตรหัส</span>
+          </v-tooltip>
+
+        </div>
+      </template>
+
+    </v-data-table>
+
+    <!-- ================= FORM ================= -->
+    <v-dialog v-model="dialog" max-width="500">
+      <v-card rounded="xl">
+        <v-card-title>{{ isEdit ? 'แก้ไข Admin' : 'เพิ่ม Admin' }}</v-card-title>
+
+        <v-card-text>
+          <v-text-field v-model="form.firstName" label="ชื่อ" />
+          <v-text-field v-model="form.lastName" label="นามสกุล" />
+          <v-text-field v-model="form.email" label="Email" />
+
+          <v-text-field
+            v-if="!isEdit"
+            v-model="form.password"
+            label="Password"
+            type="password"
+          />
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="dialog = false">ยกเลิก</v-btn>
+          <v-btn color="primary" @click="openConfirm">บันทึก</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- ================= CONFIRM SAVE ================= -->
+    <v-dialog v-model="confirmDialog" max-width="400">
+      <v-card>
+        <v-card-title>ยืนยัน</v-card-title>
+        <v-card-text>
+          คุณต้องการ{{ isEdit ? 'แก้ไข' : 'สร้าง' }} Admin ใช่หรือไม่?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="confirmDialog = false">ยกเลิก</v-btn>
+          <v-btn color="primary" @click="submit">ยืนยัน</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- ================= DELETE ================= -->
+    <v-dialog v-model="deleteDialog" max-width="400">
+      <v-card>
+        <v-card-title>ยืนยันการลบ</v-card-title>
+        <v-card-text>คุณต้องการลบ Admin นี้ใช่หรือไม่?</v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="deleteDialog = false">ยกเลิก</v-btn>
+          <v-btn color="error" @click="submitDelete">ลบ</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- ================= RESET ================= -->
+    <v-dialog v-model="resetDialog" max-width="400">
+      <v-card>
+        <v-card-title>รีเซ็ตรหัสผ่าน</v-card-title>
+
+        <v-card-text>
+          <v-text-field
+            v-model="newPassword"
+            label="รหัสผ่านใหม่"
+            type="password"
+          />
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="resetDialog = false">ยกเลิก</v-btn>
+          <v-btn color="warning" @click="submitReset">บันทึก</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- ================= SNACKBAR ================= -->
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
+      {{ snackbar.text }}
+    </v-snackbar>
+
+  </v-card>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+
+const admins = ref([])
+
+const dialog = ref(false)
+const confirmDialog = ref(false)
+const deleteDialog = ref(false)
+const resetDialog = ref(false)
+
+const isEdit = ref(false)
+const deleteId = ref(null)
+const resetUserId = ref(null)
+
+const newPassword = ref('')
+
+const snackbar = ref({
+  show: false,
+  text: '',
+  color: 'success'
+})
+
+const form = ref({
+  id: null,
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: ''
+})
+
+const headers = [
+  { title: 'ID', value: 'id' },
+  { title: 'ชื่อ-นามสกุล', value: 'fullname' },
+  { title: 'Email', value: 'email' },
+  { title: 'Actions', value: 'actions' }
+]
+
+// snackbar helper
+const showSnack = (text, color = 'success') => {
+  snackbar.value = { show: true, text, color }
+}
+
+// load
+const fetchAdmins = async () => {
+  const token = localStorage.getItem('token')
+  const res = await axios.get('http://localhost:5000/api/admin/users', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  admins.value = res.data
+}
+
+// create
+const openCreate = () => {
+  isEdit.value = false
+  form.value = { firstName: '', lastName: '', email: '', password: '' }
+  dialog.value = true
+}
+
+// edit
+const openEdit = (item) => {
+  isEdit.value = true
+  form.value = { ...item, password: '' }
+  dialog.value = true
+}
+
+// delete
+const openDelete = (item) => {
+  deleteId.value = item.id
+  deleteDialog.value = true
+}
+
+// reset
+const openReset = (id) => {
+  resetUserId.value = id
+  newPassword.value = ''
+  resetDialog.value = true
+}
+
+// confirm save
+const openConfirm = () => {
+  confirmDialog.value = true
+}
+
+// submit
+const submit = async () => {
+  confirmDialog.value = false
+  const token = localStorage.getItem('token')
+
+  try {
+    if (isEdit.value) {
+      await axios.put(
+        `http://localhost:5000/api/admin/users/${form.value.id}`,
+        form.value,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      showSnack("แก้ไขสำเร็จ")
+    } else {
+      await axios.post(
+        'http://localhost:5000/api/admin/users/create-admin',
+        form.value,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      showSnack("เพิ่ม Admin สำเร็จ")
+    }
+
+    dialog.value = false
+    fetchAdmins()
+
+  } catch (err) {
+    showSnack(err.response?.data?.message || "ผิดพลาด", 'error')
+  }
+}
+
+// delete submit
+const submitDelete = async () => {
+  const token = localStorage.getItem('token')
+
+  try {
+    await axios.delete(
+      `http://localhost:5000/api/admin/users/${deleteId.value}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+
+    showSnack("ลบสำเร็จ", "success")
+    deleteDialog.value = false
+    fetchAdmins()
+
+  } catch (err) {
+    showSnack("ลบไม่สำเร็จ", "error")
+  }
+}
+
+// reset submit
+const submitReset = async () => {
+  if (!newPassword.value) {
+    showSnack("กรุณาใส่รหัสผ่าน", "error")
+    return
+  }
+
+  const token = localStorage.getItem('token')
+
+  try {
+    await axios.put(
+      `http://localhost:5000/api/admin/users/${resetUserId.value}/reset-password`,
+      { newPassword: newPassword.value },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+
+    showSnack("รีเซ็ตรหัสสำเร็จ")
+    resetDialog.value = false
+
+  } catch {
+    showSnack("เกิดข้อผิดพลาด", "error")
+  }
+}
+
+onMounted(fetchAdmins)
+</script>
